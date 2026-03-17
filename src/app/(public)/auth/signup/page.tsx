@@ -41,7 +41,7 @@ export default function SignupPage() {
   // ─── Step 1: Email ───
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
-  const [emailTouched, setEmailTouched] = useState(false);
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
 
   // ─── Step 2: Verify ───
@@ -86,7 +86,7 @@ export default function SignupPage() {
   // ─── Step 1 handlers ───
   async function handleEmailSubmit(e: FormEvent) {
     e.preventDefault();
-    setEmailTouched(true);
+    setEmailSubmitted(true);
     const err = validateEmail(email);
     setEmailError(err);
     if (err) return;
@@ -259,13 +259,12 @@ export default function SignupPage() {
             type="email"
             placeholder="name@example.com"
             value={email}
-            onChange={(e) => { setEmail(e.target.value); setEmailError(null); }}
-            onBlur={() => { setEmailTouched(true); setEmailError(validateEmail(email)); }}
-            aria-invalid={emailTouched && !!emailError}
+            onChange={(e) => { setEmail(e.target.value); if (emailSubmitted) setEmailError(null); }}
+            aria-invalid={emailSubmitted && !!emailError}
             maxLength={254}
             autoFocus
           />
-          {emailTouched && emailError && (
+          {emailSubmitted && emailError && (
             <p className="absolute -bottom-4 text-xs text-destructive">{emailError}</p>
           )}
         </div>

@@ -65,7 +65,6 @@ export default function LoginPage() {
           placeholder="name@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          onBlur={() => handleBlur("email")}
           aria-invalid={touched.email && !!errors.email}
           maxLength={254}
         />
@@ -91,7 +90,6 @@ export default function LoginPage() {
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          onBlur={() => handleBlur("password")}
           aria-invalid={touched.password && !!errors.password}
         />
         {touched.password && errors.password && (

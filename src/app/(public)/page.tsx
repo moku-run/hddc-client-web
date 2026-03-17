@@ -45,7 +45,7 @@ export default function Home() {
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button asChild className="h-10 px-6 text-sm font-semibold">
-                  <Link href="/auth/signup">
+                  <Link href="/auth/login">
                     무료로 시작하기
                     <ArrowRight className="ml-1 size-4" />
                   </Link>
@@ -266,7 +266,7 @@ export default function Home() {
               30초면 충분합니다. 무료로 시작하세요.
             </p>
             <Button asChild className="mt-8 h-11 px-8 text-sm font-semibold">
-              <Link href="/auth/signup">
+              <Link href="/auth/login">
                 무료로 시작하기
                 <ArrowRight className="ml-1 size-4" />
               </Link>
