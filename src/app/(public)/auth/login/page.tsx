@@ -65,6 +65,7 @@ export default function LoginPage() {
           placeholder="name@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onBlur={() => { if (email) handleBlur("email"); else setFieldError("email", null); }}
           aria-invalid={touched.email && !!errors.email}
           maxLength={254}
         />

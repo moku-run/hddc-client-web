@@ -53,7 +53,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const panel = getPanelColors(colorName, mockupDark);
 
   return (
-    <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center px-4 py-12">
+    <div className="flex min-h-full items-center justify-center px-4 py-12">
       <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-border bg-card shadow-lg lg:flex lg:min-h-[680px]">
         {/* ─── Left: Branding Panel ─── */}
 

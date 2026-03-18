@@ -260,6 +260,7 @@ export default function SignupPage() {
             placeholder="name@example.com"
             value={email}
             onChange={(e) => { setEmail(e.target.value); if (emailSubmitted) setEmailError(null); }}
+            onBlur={() => { if (email) { setEmailSubmitted(true); setEmailError(validateEmail(email)); } }}
             aria-invalid={emailSubmitted && !!emailError}
             maxLength={254}
             autoFocus
@@ -269,7 +270,7 @@ export default function SignupPage() {
           )}
         </div>
 
-        <Button type="submit" className="h-11 text-sm font-semibold" disabled={sending}>
+        <Button type="submit" className="h-11 text-sm font-semibold cursor-pointer" disabled={sending}>
           {sending ? (
             <><SpinnerGap className="size-4 animate-spin" />발송 중...</>
           ) : (
