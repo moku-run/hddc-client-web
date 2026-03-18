@@ -61,6 +61,7 @@ export default function SignupPage() {
   const [agreedError, setAgreedError] = useState<string | null>(null);
   const [registering, setRegistering] = useState(false);
   const nicknameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pwConfirmError, setPwConfirmError] = useState<string | null>(null);
 
   const [termsOpen, setTermsOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -182,15 +183,20 @@ export default function SignupPage() {
     }
   }
 
+  const [resending, setResending] = useState(false);
+
   async function handleResend() {
     setCode(Array(CODE_LENGTH).fill(""));
     setCodeError(null);
+    setResending(true);
     try {
       await authApi.sendVerificationCode(email);
       setCooldown(COOLDOWN_SEC);
       setCodeTimer(CODE_TTL_SEC);
     } catch {
       setCodeError("재전송에 실패했습니다. 잠시 후 다시 시도해주세요");
+    } finally {
+      setResending(false);
     }
     requestAnimationFrame(() => inputRefs.current[0]?.focus());
   }
@@ -222,6 +228,16 @@ export default function SignupPage() {
   useEffect(() => {
     return () => { if (nicknameTimerRef.current) clearTimeout(nicknameTimerRef.current); };
   }, []);
+
+  const handlePasswordConfirmChange = useCallback((value: string) => {
+    setPasswordConfirm(value);
+    if (!value) { setPwConfirmError(null); return; }
+    if (value.length >= password.length) {
+      setPwConfirmError(password !== value ? "비밀번호가 일치하지 않습니다" : null);
+    } else {
+      setPwConfirmError(null);
+    }
+  }, [password]);
 
   // ─── Step 3 handlers ───
   const registerValidators = useMemo(() => ({
@@ -395,12 +411,18 @@ export default function SignupPage() {
             variant="outline"
             className="h-9 gap-2 text-sm"
             onClick={handleResend}
-            disabled={cooldown > 0}
+            disabled={cooldown > 0 || resending}
           >
-            <ArrowCounterClockwise className="size-4" />
-            {cooldown > 0
-              ? `${cooldown}초 후 재전송 가능`
-              : "인증코드 재전송"}
+            {resending ? (
+              <><SpinnerGap className="size-4 animate-spin" />재전송 중...</>
+            ) : (
+              <>
+                <ArrowCounterClockwise className="size-4" />
+                {cooldown > 0
+                  ? `${cooldown}초 후 재전송 가능`
+                  : "인증코드 재전송"}
+              </>
+            )}
           </Button>
 
           <button
@@ -482,14 +504,14 @@ export default function SignupPage() {
             type="password"
             placeholder="••••••••"
             value={passwordConfirm}
-            onChange={(e) => setPasswordConfirm(e.target.value)}
-            onBlur={() => { if (passwordConfirm) handleBlur("passwordConfirm"); else setFieldError("passwordConfirm", null); }}
-            aria-invalid={touched.passwordConfirm && !!errors.passwordConfirm}
+            onChange={(e) => handlePasswordConfirmChange(e.target.value)}
+            onBlur={() => { if (passwordConfirm) setPwConfirmError(password !== passwordConfirm ? "비밀번호가 일치하지 않습니다" : null); }}
+            aria-invalid={!!pwConfirmError || (touched.passwordConfirm && !!errors.passwordConfirm)}
             maxLength={20}
           />
-          {touched.passwordConfirm && errors.passwordConfirm && (
+          {(pwConfirmError || (touched.passwordConfirm && errors.passwordConfirm)) && (
             <p className="absolute -bottom-4 text-xs text-destructive">
-              {errors.passwordConfirm}
+              {pwConfirmError || errors.passwordConfirm}
             </p>
           )}
         </div>

@@ -26,11 +26,16 @@ export class ApiError extends Error {
   }
 }
 
+const PUBLIC_PATHS = ["/api/auth/"];
+
 async function request<T = null>(
   path: string,
   options: RequestInit = {},
 ): Promise<ApiResponse<T>> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("hddc-token") : null;
+  const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
+  const token = !isPublic && typeof window !== "undefined"
+    ? localStorage.getItem("hddc-token")
+    : null;
 
   const res = await fetch(path, {
     ...options,
