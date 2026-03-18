@@ -135,3 +135,12 @@
     @apply font-sans;
   }
 }
+
+button,
+[role="button"],
+select,
+summary,
+[type="checkbox"],
+[type="radio"] {
+  cursor: pointer;
+}

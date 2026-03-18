@@ -54,11 +54,13 @@ export default function SignupPage() {
 
   // ─── Step 3: Register ───
   const [nickname, setNickname] = useState("");
+  const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [agreedError, setAgreedError] = useState<string | null>(null);
   const [registering, setRegistering] = useState(false);
+  const nicknameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [termsOpen, setTermsOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -193,6 +195,34 @@ export default function SignupPage() {
     requestAnimationFrame(() => inputRefs.current[0]?.focus());
   }
 
+  // ─── Nickname debounce check ───
+  const handleNicknameChange = useCallback((value: string) => {
+    setNickname(value);
+    setNicknameStatus("idle");
+    if (nicknameTimerRef.current) clearTimeout(nicknameTimerRef.current);
+
+    const clientError = validateNickname(value);
+    if (clientError) return; // 클라이언트 validation 실패 시 서버 요청 안 함
+
+    setNicknameStatus("checking");
+    nicknameTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await authApi.checkNickname(value);
+        if (res.payload?.available) {
+          setNicknameStatus("available");
+        } else {
+          setNicknameStatus("taken");
+        }
+      } catch {
+        setNicknameStatus("idle");
+      }
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    return () => { if (nicknameTimerRef.current) clearTimeout(nicknameTimerRef.current); };
+  }, []);
+
   // ─── Step 3 handlers ───
   const registerValidators = useMemo(() => ({
     nickname: () => validateNickname(nickname),
@@ -209,7 +239,10 @@ export default function SignupPage() {
     if (!agreed) {
       setAgreedError("약관에 동의해주세요");
     }
-    if (!fieldsValid || !agreed) return;
+    if (nicknameStatus === "taken") {
+      setFieldError("nickname", "이미 사용 중인 닉네임입니다");
+    }
+    if (!fieldsValid || !agreed || nicknameStatus === "taken") return;
     setAgreedError(null);
 
     setRegistering(true);
@@ -270,7 +303,7 @@ export default function SignupPage() {
           )}
         </div>
 
-        <Button type="submit" className="h-11 text-sm font-semibold cursor-pointer" disabled={sending}>
+        <Button type="submit" className="h-11 text-sm font-semibold" disabled={sending}>
           {sending ? (
             <><SpinnerGap className="size-4 animate-spin" />발송 중...</>
           ) : (
@@ -404,15 +437,22 @@ export default function SignupPage() {
             type="text"
             placeholder="나만의 이름"
             value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            onBlur={() => handleBlur("nickname")}
-            aria-invalid={touched.nickname && !!errors.nickname}
+            onChange={(e) => handleNicknameChange(e.target.value)}
+            onBlur={() => { if (nickname) handleBlur("nickname"); else setFieldError("nickname", null); }}
+            aria-invalid={(touched.nickname && !!errors.nickname) || nicknameStatus === "taken"}
             maxLength={20}
             autoFocus
           />
-          {touched.nickname && errors.nickname && (
+          <p className="text-xs text-muted-foreground">한글, 영문, 숫자 2~20자</p>
+          {touched.nickname && errors.nickname ? (
             <p className="absolute -bottom-4 text-xs text-destructive">{errors.nickname}</p>
-          )}
+          ) : nicknameStatus === "checking" ? (
+            <p className="absolute -bottom-4 text-xs text-muted-foreground">중복 확인 중...</p>
+          ) : nicknameStatus === "available" ? (
+            <p className="absolute -bottom-4 text-xs text-green-600">사용 가능한 닉네임입니다</p>
+          ) : nicknameStatus === "taken" ? (
+            <p className="absolute -bottom-4 text-xs text-destructive">이미 사용 중인 닉네임입니다</p>
+          ) : null}
         </div>
 
         {/* Password */}
@@ -424,14 +464,13 @@ export default function SignupPage() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onBlur={() => handleBlur("password")}
+            onBlur={() => { if (password) handleBlur("password"); else setFieldError("password", null); }}
             aria-invalid={touched.password && !!errors.password}
             maxLength={20}
           />
-          {touched.password && errors.password ? (
+          <p className="text-xs text-muted-foreground">8~20자, 영문·숫자·특수문자(!@#$%^&*()_=+.) 포함</p>
+          {touched.password && errors.password && (
             <p className="absolute -bottom-4 text-xs text-destructive">{errors.password}</p>
-          ) : (
-            <p className="text-xs text-muted-foreground">8~20자, 영문·숫자·특수문자(!@#$%^&*()_=+.) 포함</p>
           )}
         </div>
 
@@ -444,7 +483,7 @@ export default function SignupPage() {
             placeholder="••••••••"
             value={passwordConfirm}
             onChange={(e) => setPasswordConfirm(e.target.value)}
-            onBlur={() => handleBlur("passwordConfirm")}
+            onBlur={() => { if (passwordConfirm) handleBlur("passwordConfirm"); else setFieldError("passwordConfirm", null); }}
             aria-invalid={touched.passwordConfirm && !!errors.passwordConfirm}
             maxLength={20}
           />

@@ -67,6 +67,12 @@ export const authApi = {
     });
   },
 
+  checkNickname(nickname: string) {
+    return request<{ available: boolean; nickname: string }>(
+      `/api/auth/check-nickname?nickname=${encodeURIComponent(nickname)}`,
+    );
+  },
+
   signUp(email: string, password: string, nickname: string) {
     return request<number>("/api/auth/sign-up", {
       method: "POST",
