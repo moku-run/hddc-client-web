@@ -132,7 +132,7 @@ export const authApi = {
 
 /* ─── Image Upload (Pre-signed URL) ─── */
 
-export type ImageDirectory = "avatars" | "backgrounds" | "links";
+export type ImageDirectory = "link/avatars" | "link/backgrounds" | "link/profiles";
 
 interface PresignedUrlResult {
   uploadUrl: string;
@@ -141,7 +141,7 @@ interface PresignedUrlResult {
 }
 
 /**
- * Pre-signed URL 발급 → R2에 직접 업로드 → imageUrl 반환
+ * Pre-signed URL 발급 → R2에 직접 업로드 → key 반환 (DB에 저장할 값)
  */
 export async function uploadImage(
   file: File,
@@ -159,7 +159,7 @@ export async function uploadImage(
     }),
   });
 
-  const { uploadUrl, imageUrl } = res.payload!;
+  const { uploadUrl, key } = res.payload!;
 
   // Step 2: R2에 직접 PUT
   const uploadRes = await fetch(uploadUrl, {
@@ -172,8 +172,18 @@ export async function uploadImage(
     throw new Error("이미지 업로드에 실패했습니다");
   }
 
-  // Step 3: imageUrl 반환 (프로필 저장 시 사용)
-  return imageUrl;
+  // Step 3: key 반환 (프로필 저장 시 DB에 저장할 값)
+  return key;
+}
+
+/**
+ * key → 조회용 pre-signed URL 발급
+ */
+export async function getImageUrl(key: string): Promise<string> {
+  const res = await request<{ url: string }>(
+    `/api/upload/presigned-url?key=${encodeURIComponent(key)}`,
+  );
+  return res.payload!.url;
 }
 
 /* ─── Profile Response Types ─── */

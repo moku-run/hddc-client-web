@@ -4,6 +4,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://hotdeal.cool";
 
 import { useProfileData } from "@/hooks/use-profile-data";
 import { Button } from "@/components/ui/button";
+import { R2Image } from "@/components/ui/r2-image";
 import { SectionHeader } from "@/components/ui/section-header";
 import {
   ChartContainer,
@@ -19,7 +20,7 @@ import {
   ArrowUpRight,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { SiteFooter } from "@/components/site-footer";
+
 
 /* ─── Mock analytics data ─── */
 const MOCK_STATS = {
@@ -107,7 +108,7 @@ export default function DashboardPage() {
             </Link>
           </Button>
         </div>
-        <SiteFooter />
+
       </div>
     );
   }
@@ -118,9 +119,8 @@ export default function DashboardPage() {
       <div className="mb-8 flex flex-col gap-4 rounded-xl border border-border bg-card p-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           {profileData.avatarUrl ? (
-            <img
-              src={profileData.avatarUrl}
-              alt=""
+            <R2Image
+              imageKey={profileData.avatarUrl}
               className="size-16 rounded-full border border-border object-cover"
             />
           ) : (
@@ -264,8 +264,6 @@ export default function DashboardPage() {
           </Link>
         </Button>
       </div>
-
-      <SiteFooter />
     </div>
   );
 }

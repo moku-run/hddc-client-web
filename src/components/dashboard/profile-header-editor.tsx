@@ -8,6 +8,8 @@ import { RemoveButton } from "@/components/ui/remove-button";
 import { SectionHeader } from "@/components/ui/section-header";
 import { InputWithCounter } from "@/components/ui/input-with-counter";
 import { ImageCropModal } from "./image-crop-modal";
+import { R2Image } from "@/components/ui/r2-image";
+import { useImageUrl } from "@/hooks/use-image-url";
 import { validateSlug } from "@/lib/validators";
 import { useSectionFocus } from "@/contexts/edit-focus-context";
 import type { ProfileData, HeaderLayout } from "@/lib/profile-types";
@@ -24,6 +26,8 @@ interface Props {
 
 export function ProfileHeaderEditor({ profileData, updateProfile, headerLayout, setHeaderLayout }: Props) {
   const [cropOpen, setCropOpen] = useState<"avatar" | "background" | null>(null);
+  const avatarSrc = useImageUrl(profileData.avatarUrl);
+  const backgroundSrc = useImageUrl(profileData.backgroundUrl);
   const slugFocus = useSectionFocus("slug");
   const bgFocus = useSectionFocus("background");
   const avatarFocus = useSectionFocus("avatar");
@@ -171,9 +175,8 @@ export function ProfileHeaderEditor({ profileData, updateProfile, headerLayout, 
           onClick={() => setCropOpen("background")}
         >
           {profileData.backgroundUrl ? (
-            <img
-              src={profileData.backgroundUrl}
-              alt=""
+            <R2Image
+              imageKey={profileData.backgroundUrl}
               className="h-28 w-full object-cover"
               onError={() => updateProfile({ backgroundUrl: null })}
             />
@@ -205,9 +208,8 @@ export function ProfileHeaderEditor({ profileData, updateProfile, headerLayout, 
           onClick={() => setCropOpen("avatar")}
         >
           {profileData.avatarUrl ? (
-            <img
-              src={profileData.avatarUrl}
-              alt=""
+            <R2Image
+              imageKey={profileData.avatarUrl}
               className="size-14 rounded-full border border-border object-cover"
               onError={() => updateProfile({ avatarUrl: null })}
             />
@@ -227,13 +229,13 @@ export function ProfileHeaderEditor({ profileData, updateProfile, headerLayout, 
       <ImageCropModal
         open={cropOpen === "avatar"}
         variant="circle"
-        initialSrc={profileData.avatarUrl}
+        initialSrc={avatarSrc}
         onApply={async (dataUrl) => {
           setCropOpen(null);
           try {
             const file = dataUrlToFile(dataUrl, "avatar.jpg");
-            const url = await uploadImage(file, "avatars");
-            updateProfile({ avatarUrl: url });
+            const key = await uploadImage(file, "link/avatars");
+            updateProfile({ avatarUrl: key });
           } catch { toast.error("아바타 업로드에 실패했습니다"); }
         }}
         onCancel={() => setCropOpen(null)}
@@ -242,13 +244,13 @@ export function ProfileHeaderEditor({ profileData, updateProfile, headerLayout, 
       <ImageCropModal
         open={cropOpen === "background"}
         variant="banner"
-        initialSrc={profileData.backgroundUrl}
+        initialSrc={backgroundSrc}
         onApply={async (dataUrl) => {
           setCropOpen(null);
           try {
             const file = dataUrlToFile(dataUrl, "background.jpg");
-            const url = await uploadImage(file, "backgrounds");
-            updateProfile({ backgroundUrl: url });
+            const key = await uploadImage(file, "link/backgrounds");
+            updateProfile({ backgroundUrl: key });
           } catch { toast.error("배경 이미지 업로드에 실패했습니다"); }
         }}
         onCancel={() => setCropOpen(null)}

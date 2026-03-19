@@ -24,6 +24,8 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { DragHandle } from "@/components/ui/drag-handle";
 import { Switch } from "@/components/ui/switch";
 import { ImageCropModal } from "./image-crop-modal";
+import { R2Image } from "@/components/ui/r2-image";
+import { useImageUrl } from "@/hooks/use-image-url";
 import { useSectionFocus, useEditFocus } from "@/contexts/edit-focus-context";
 import { cn, dataUrlToFile } from "@/lib/utils";
 import { validateUrl, normalizeUrl } from "@/lib/validators";
@@ -94,6 +96,7 @@ const LINK_STYLES: ToggleGroupOption<LinkStyle>[] = [
 export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, addLink, updateLink, removeLink, toggleLink, reorderLinks, setLinkLayout, setLinkStyle, setLinkAnimation }: Props) {
   const [cropLinkId, setCropLinkId] = useState<number | null>(null);
   const cropLink = links.find((l) => l.id === cropLinkId);
+  const cropLinkImageSrc = useImageUrl(cropLink?.imageUrl ?? null);
   const sectionFocus = useSectionFocus("links");
   const { setActiveLinkId } = useEditFocus();
 
@@ -115,8 +118,8 @@ export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, ad
     setCropLinkId(null);
     try {
       const file = dataUrlToFile(dataUrl, "link.jpg");
-      const url = await uploadImage(file, "links");
-      updateLink(cropLinkId, { imageUrl: url });
+      const key = await uploadImage(file, "link/profiles");
+      updateLink(cropLinkId, { imageUrl: key });
     } catch { toast.error("링크 이미지 업로드에 실패했습니다"); }
   }
 
@@ -159,9 +162,8 @@ export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, ad
                   {/* Image upload trigger */}
                   <div className="shrink-0 cursor-pointer" onClick={() => setCropLinkId(link.id)}>
                     {link.imageUrl ? (
-                      <img
-                        src={link.imageUrl}
-                        alt=""
+                      <R2Image
+                        imageKey={link.imageUrl}
                         className="size-12 rounded-full border border-border object-cover"
                         onError={() => updateLink(link.id, { imageUrl: null })}
                       />
@@ -232,7 +234,7 @@ export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, ad
 
       <ImageCropModal
         open={cropLinkId != null}
-        initialSrc={cropLink?.imageUrl || null}
+        initialSrc={cropLinkImageSrc}
         onApply={handleCropApply}
         onCancel={handleCropCancel}
         linkTitle={cropLink?.title}

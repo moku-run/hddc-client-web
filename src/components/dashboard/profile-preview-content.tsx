@@ -17,6 +17,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
+import { R2Image } from "@/components/ui/r2-image";
 import { useEditFocus, type EditSection } from "@/contexts/edit-focus-context";
 import { type ProfileData, type ProfileLink, type LinkLayout, type LinkStyle, type LinkAnimation } from "@/lib/profile-types";
 import { SponsorBanner } from "@/components/sponsor-banner";
@@ -91,9 +92,8 @@ function Avatar({ src, isDefault }: { src: string | null; isDefault?: boolean })
         핫딜닷쿨
       </div>
       {src && (
-        <img
-          src={src}
-          alt=""
+        <R2Image
+          imageKey={src}
           className="absolute inset-0 size-20 rounded-full object-cover"
           onError={(e) => { e.currentTarget.style.display = "none"; }}
         />
@@ -141,9 +141,8 @@ function LinkImage({ src, size = "size-9", isDefault }: { src: string; size?: st
       )}>
         <span className={cn("text-[6px] font-bold leading-none", isDefault ? "text-background" : "text-primary-foreground")}>핫딜닷쿨</span>
       </div>
-      <img
-        src={src}
-        alt=""
+      <R2Image
+        imageKey={src}
         className={cn("absolute inset-0 shrink-0 rounded-full object-cover", size)}
         onError={(e) => { e.currentTarget.style.display = "none"; }}
       />
@@ -392,7 +391,7 @@ export function ProfilePreviewContent({ profileData, variant, onReorderLinks }: 
             )}
           >
             {backgroundUrl ? (
-              <img src={backgroundUrl} alt="" className="h-32 w-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+              <R2Image imageKey={backgroundUrl} className="h-32 w-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
             ) : (
               <div className="flex h-32 w-full items-center justify-center bg-muted/70">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="size-10 text-muted-foreground/20" fill="currentColor">
@@ -496,7 +495,7 @@ export function ProfilePreviewContent({ profileData, variant, onReorderLinks }: 
       {/* Background — always rendered */}
       <HighlightWrapper section="background" activeSection={activeSection} overlay className="rounded-none -mx-6 -mt-6">
         {backgroundUrl ? (
-          <img src={backgroundUrl} alt="" className="h-36 w-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+          <R2Image imageKey={backgroundUrl} className="h-36 w-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         ) : (
           <div className="flex h-36 w-full items-center justify-center bg-muted/70">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="size-10 text-muted-foreground/20" fill="currentColor">
