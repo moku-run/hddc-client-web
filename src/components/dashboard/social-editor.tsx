@@ -62,9 +62,9 @@ const SOCIAL_ICONS: Record<SocialPlatform, IconComponent> = {
 interface Props {
   socials: SocialLink[];
   addSocial: (platform: SocialPlatform) => void;
-  updateSocial: (id: string, url: string) => void;
-  removeSocial: (id: string) => void;
-  reorderSocials: (activeId: string, overId: string) => void;
+  updateSocial: (id: number, url: string) => void;
+  removeSocial: (id: number) => void;
+  reorderSocials: (activeId: number, overId: number) => void;
 }
 
 function SortableSocialItem({ social, children }: { social: SocialLink; children: React.ReactNode }) {
@@ -103,7 +103,7 @@ function SocialInput({
   updateSocial,
 }: {
   social: SocialLink;
-  updateSocial: (id: string, url: string) => void;
+  updateSocial: (id: number, url: string) => void;
 }) {
   const baseUrl = SOCIAL_PLATFORM_BASE_URLS[social.platform];
   const placeholder = SOCIAL_PLACEHOLDERS[social.platform] || "입력";
@@ -171,7 +171,7 @@ export function SocialEditor({ socials, addSocial, updateSocial, removeSocial, r
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      reorderSocials(active.id as string, over.id as string);
+      reorderSocials(active.id as number, over.id as number);
     },
     [reorderSocials],
   );

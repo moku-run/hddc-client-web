@@ -3,13 +3,16 @@ import type { ProfileData, SocialLink, SocialPlatform } from "@/lib/profile-type
 
 type SetWithHistory = (updater: (prev: ProfileData) => ProfileData, immediate?: boolean) => void;
 
+let tempSocialIdCounter = -1000;
+function nextTempSocialId() { return tempSocialIdCounter--; }
+
 export function useSocialActions(setWithHistory: SetWithHistory) {
   const addSocial = useCallback((platform: SocialPlatform) => {
     setWithHistory((prev) => {
       if (prev.socials.length >= 8) return prev;
       if (prev.socials.some((s) => s.platform === platform)) return prev;
       const newSocial: SocialLink = {
-        id: crypto.randomUUID(),
+        id: nextTempSocialId(),
         platform,
         url: "",
       };
@@ -17,21 +20,21 @@ export function useSocialActions(setWithHistory: SetWithHistory) {
     }, true);
   }, [setWithHistory]);
 
-  const updateSocial = useCallback((id: string, url: string) => {
+  const updateSocial = useCallback((id: number, url: string) => {
     setWithHistory((prev) => ({
       ...prev,
       socials: prev.socials.map((s) => (s.id === id ? { ...s, url } : s)),
     }));
   }, [setWithHistory]);
 
-  const removeSocial = useCallback((id: string) => {
+  const removeSocial = useCallback((id: number) => {
     setWithHistory((prev) => ({
       ...prev,
       socials: prev.socials.filter((s) => s.id !== id),
     }), true);
   }, [setWithHistory]);
 
-  const reorderSocials = useCallback((activeId: string, overId: string) => {
+  const reorderSocials = useCallback((activeId: number, overId: number) => {
     setWithHistory((prev) => {
       const oldIndex = prev.socials.findIndex((s) => s.id === activeId);
       const newIndex = prev.socials.findIndex((s) => s.id === overId);

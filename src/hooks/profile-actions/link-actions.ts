@@ -1,18 +1,21 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import type { ProfileData, ProfileLink } from "@/lib/profile-types";
 
 type SetWithHistory = (updater: (prev: ProfileData) => ProfileData, immediate?: boolean) => void;
+
+let tempIdCounter = -1;
+function nextTempId() { return tempIdCounter--; }
 
 export function useLinkActions(setWithHistory: SetWithHistory) {
   const addLink = useCallback(() => {
     setWithHistory((prev) => {
       if (prev.links.length >= 20) return prev;
       const newLink: ProfileLink = {
-        id: crypto.randomUUID(),
+        id: nextTempId(),
         title: "",
         url: "",
-        imageUrl: "",
-        description: "",
+        imageUrl: null,
+        description: null,
         order: prev.links.length,
         enabled: true,
       };
@@ -21,7 +24,7 @@ export function useLinkActions(setWithHistory: SetWithHistory) {
   }, [setWithHistory]);
 
   const updateLink = useCallback(
-    (id: string, fields: Partial<Pick<ProfileLink, "title" | "url" | "imageUrl" | "description">>) => {
+    (id: number, fields: Partial<Pick<ProfileLink, "title" | "url" | "imageUrl" | "description">>) => {
       setWithHistory((prev) => ({
         ...prev,
         links: prev.links.map((l) => (l.id === id ? { ...l, ...fields } : l)),
@@ -30,7 +33,7 @@ export function useLinkActions(setWithHistory: SetWithHistory) {
     [setWithHistory],
   );
 
-  const removeLink = useCallback((id: string) => {
+  const removeLink = useCallback((id: number) => {
     setWithHistory((prev) => ({
       ...prev,
       links: prev.links
@@ -39,7 +42,7 @@ export function useLinkActions(setWithHistory: SetWithHistory) {
     }), true);
   }, [setWithHistory]);
 
-  const toggleLink = useCallback((id: string) => {
+  const toggleLink = useCallback((id: number) => {
     setWithHistory((prev) => ({
       ...prev,
       links: prev.links.map((l) =>
@@ -48,7 +51,7 @@ export function useLinkActions(setWithHistory: SetWithHistory) {
     }), true);
   }, [setWithHistory]);
 
-  const moveLink = useCallback((id: string, direction: "up" | "down") => {
+  const moveLink = useCallback((id: number, direction: "up" | "down") => {
     setWithHistory((prev) => {
       const idx = prev.links.findIndex((l) => l.id === id);
       if (idx === -1) return prev;
@@ -63,7 +66,7 @@ export function useLinkActions(setWithHistory: SetWithHistory) {
     }, true);
   }, [setWithHistory]);
 
-  const reorderLinks = useCallback((activeId: string, overId: string) => {
+  const reorderLinks = useCallback((activeId: number, overId: number) => {
     setWithHistory((prev) => {
       const oldIndex = prev.links.findIndex((l) => l.id === activeId);
       const newIndex = prev.links.findIndex((l) => l.id === overId);

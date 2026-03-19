@@ -267,8 +267,8 @@ function LinksSection({
   linkStyle: LinkStyle;
   linkAnimation?: LinkAnimation;
   activeSection: EditSection;
-  activeLinkId: string | null;
-  onReorderLinks?: (activeId: string, overId: string) => void;
+  activeLinkId: number | null;
+  onReorderLinks?: (activeId: number, overId: number) => void;
   isDefault?: boolean;
   tint?: string;
 }) {
@@ -280,7 +280,7 @@ function LinksSection({
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id || !onReorderLinks) return;
-      onReorderLinks(active.id as string, over.id as string);
+      onReorderLinks(active.id as number, over.id as number);
     },
     [onReorderLinks],
   );
@@ -349,13 +349,13 @@ function LinksSection({
 interface Props {
   profileData: ProfileData;
   variant: "mobile" | "web";
-  onReorderLinks?: (activeId: string, overId: string) => void;
+  onReorderLinks?: (activeId: number, overId: number) => void;
 }
 
 const SAMPLE_LINKS: ProfileLink[] = [
-  { id: "s1", title: "나의 링크 1", url: "", imageUrl: "", description: "", order: 0, enabled: true },
-  { id: "s2", title: "나의 링크 2", url: "", imageUrl: "", description: "", order: 1, enabled: true },
-  { id: "s3", title: "나의 링크 3", url: "", imageUrl: "", description: "", order: 2, enabled: true },
+  { id: -9001, title: "나의 링크 1", url: "", imageUrl: null, description: null, order: 0, enabled: true },
+  { id: -9002, title: "나의 링크 2", url: "", imageUrl: null, description: null, order: 1, enabled: true },
+  { id: -9003, title: "나의 링크 3", url: "", imageUrl: null, description: null, order: 2, enabled: true },
 ];
 
 export function ProfilePreviewContent({ profileData, variant, onReorderLinks }: Props) {

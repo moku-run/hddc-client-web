@@ -11,7 +11,9 @@ import { ImageCropModal } from "./image-crop-modal";
 import { validateSlug } from "@/lib/validators";
 import { useSectionFocus } from "@/contexts/edit-focus-context";
 import type { ProfileData, HeaderLayout } from "@/lib/profile-types";
-import { cn } from "@/lib/utils";
+import { cn, dataUrlToFile } from "@/lib/utils";
+import { uploadImage } from "@/lib/api";
+import { toast } from "sonner";
 
 interface Props {
   profileData: ProfileData;
@@ -226,7 +228,14 @@ export function ProfileHeaderEditor({ profileData, updateProfile, headerLayout, 
         open={cropOpen === "avatar"}
         variant="circle"
         initialSrc={profileData.avatarUrl}
-        onApply={(dataUrl) => { updateProfile({ avatarUrl: dataUrl }); setCropOpen(null); }}
+        onApply={async (dataUrl) => {
+          setCropOpen(null);
+          try {
+            const file = dataUrlToFile(dataUrl, "avatar.jpg");
+            const url = await uploadImage(file, "avatars");
+            updateProfile({ avatarUrl: url });
+          } catch { toast.error("아바타 업로드에 실패했습니다"); }
+        }}
         onCancel={() => setCropOpen(null)}
         onRemove={() => { updateProfile({ avatarUrl: null }); setCropOpen(null); }}
       />
@@ -234,7 +243,14 @@ export function ProfileHeaderEditor({ profileData, updateProfile, headerLayout, 
         open={cropOpen === "background"}
         variant="banner"
         initialSrc={profileData.backgroundUrl}
-        onApply={(dataUrl) => { updateProfile({ backgroundUrl: dataUrl }); setCropOpen(null); }}
+        onApply={async (dataUrl) => {
+          setCropOpen(null);
+          try {
+            const file = dataUrlToFile(dataUrl, "background.jpg");
+            const url = await uploadImage(file, "backgrounds");
+            updateProfile({ backgroundUrl: url });
+          } catch { toast.error("배경 이미지 업로드에 실패했습니다"); }
+        }}
         onCancel={() => setCropOpen(null)}
         onRemove={() => { updateProfile({ backgroundUrl: null }); setCropOpen(null); }}
       />

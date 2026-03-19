@@ -16,8 +16,8 @@ export type EditSection =
 interface EditFocusContextValue {
   activeSection: EditSection;
   setActiveSection: (section: EditSection) => void;
-  activeLinkId: string | null;
-  setActiveLinkId: (id: string | null) => void;
+  activeLinkId: number | null;
+  setActiveLinkId: (id: number | null) => void;
 }
 
 const EditFocusContext = createContext<EditFocusContextValue>({
@@ -29,7 +29,7 @@ const EditFocusContext = createContext<EditFocusContextValue>({
 
 export function EditFocusProvider({ children }: { children: ReactNode }) {
   const [activeSection, setActiveSection] = useState<EditSection>(null);
-  const [activeLinkId, setActiveLinkId] = useState<string | null>(null);
+  const [activeLinkId, setActiveLinkId] = useState<number | null>(null);
   return (
     <EditFocusContext.Provider value={{ activeSection, setActiveSection, activeLinkId, setActiveLinkId }}>
       {children}

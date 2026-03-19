@@ -129,3 +129,176 @@ export const authApi = {
     });
   },
 };
+
+/* ─── Image Upload (Pre-signed URL) ─── */
+
+export type ImageDirectory = "avatars" | "backgrounds" | "links";
+
+interface PresignedUrlResult {
+  uploadUrl: string;
+  imageUrl: string;
+  key: string;
+}
+
+/**
+ * Pre-signed URL 발급 → R2에 직접 업로드 → imageUrl 반환
+ */
+export async function uploadImage(
+  file: File,
+  directory: ImageDirectory,
+): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+
+  // Step 1: pre-signed URL 발급
+  const res = await request<PresignedUrlResult>("/api/upload/presigned-url", {
+    method: "POST",
+    body: JSON.stringify({
+      directory,
+      extension: ext,
+      contentType: file.type,
+    }),
+  });
+
+  const { uploadUrl, imageUrl } = res.payload!;
+
+  // Step 2: R2에 직접 PUT
+  const uploadRes = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+
+  if (!uploadRes.ok) {
+    throw new Error("이미지 업로드에 실패했습니다");
+  }
+
+  // Step 3: imageUrl 반환 (프로필 저장 시 사용)
+  return imageUrl;
+}
+
+/* ─── Profile Response Types ─── */
+
+export interface ProfileLinkResponse {
+  id: number;
+  title: string;
+  url: string;
+  imageUrl: string | null;
+  description: string | null;
+  order: number;
+  enabled: boolean;
+}
+
+export interface SocialLinkResponse {
+  id: number;
+  platform: string;
+  url: string;
+}
+
+export interface ProfileResponse {
+  slug: string;
+  nickname: string;
+  bio: string | null;
+  avatarUrl: string | null;
+  backgroundUrl: string | null;
+  backgroundColor: string | null;
+  fontColor: string | null;
+  linkLayout: string;
+  linkStyle: string;
+  fontFamily: string;
+  headerLayout: string;
+  linkAnimation: string;
+  colorTheme: string;
+  customPrimaryColor: string | null;
+  customSecondaryColor: string | null;
+  darkMode: boolean;
+  links: ProfileLinkResponse[];
+  socials: SocialLinkResponse[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/* ─── Profile API ─── */
+
+export const profileApi = {
+  // ─── 프로필 조회/수정 ───
+  getMe() {
+    return request<ProfileResponse>("/api/profiles/me");
+  },
+
+  updateMe(data: Partial<ProfileResponse>) {
+    return request<ProfileResponse>("/api/profiles/me", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  resetMe() {
+    return request("/api/profiles/me/reset", { method: "POST" });
+  },
+
+  checkSlug(slug: string) {
+    return request<{ available: boolean; slug: string }>(
+      `/api/profiles/check-slug?slug=${encodeURIComponent(slug)}`,
+    );
+  },
+
+  // ─── 링크 CRUD ───
+  addLink(data: { title: string; url: string; description?: string }) {
+    return request<ProfileLinkResponse>("/api/profiles/me/links", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateLink(linkId: number, data: { title?: string; url?: string; description?: string }) {
+    return request<ProfileLinkResponse>(`/api/profiles/me/links/${linkId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteLink(linkId: number) {
+    return request(`/api/profiles/me/links/${linkId}`, { method: "DELETE" });
+  },
+
+  toggleLink(linkId: number) {
+    return request<{ id: number; enabled: boolean }>(
+      `/api/profiles/me/links/${linkId}/toggle`,
+      { method: "PATCH" },
+    );
+  },
+
+  reorderLinks(orderedIds: number[]) {
+    return request<ProfileLinkResponse[]>("/api/profiles/me/links/order", {
+      method: "PUT",
+      body: JSON.stringify({ orderedIds }),
+    });
+  },
+
+  // ─── 소셜 CRUD ───
+  addSocial(data: { platform: string; url: string }) {
+    return request<SocialLinkResponse>("/api/profiles/me/socials", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateSocial(socialId: number, data: { url: string }) {
+    return request<SocialLinkResponse>(`/api/profiles/me/socials/${socialId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteSocial(socialId: number) {
+    return request(`/api/profiles/me/socials/${socialId}`, { method: "DELETE" });
+  },
+
+  reorderSocials(orderedIds: number[]) {
+    return request<SocialLinkResponse[]>("/api/profiles/me/socials/order", {
+      method: "PUT",
+      body: JSON.stringify({ orderedIds }),
+    });
+  },
+
+};

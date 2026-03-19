@@ -38,7 +38,7 @@ export default function ProfileEditPage() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  if (!profile.isHydrated) {
+  if (!profile.isHydrated || profile.loadStatus === "loading") {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
         <div className="flex gap-4">
@@ -52,6 +52,17 @@ export default function ProfileEditPage() {
             <div className="h-[600px] animate-pulse rounded-xl border border-border bg-muted/30" />
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (profile.loadStatus === "error") {
+    return (
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-center gap-4 px-4 py-24 sm:px-6">
+        <p className="text-sm text-muted-foreground">프로필을 불러오지 못했습니다.</p>
+        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+          다시 시도
+        </Button>
       </div>
     );
   }
@@ -109,7 +120,12 @@ export default function ProfileEditPage() {
                   {profile.saveStatus === "saved" && (
                     <span className="inline-flex items-center gap-1 text-primary">
                       <Check className="size-3" />
-                      임시 저장됨
+                      저장됨
+                    </span>
+                  )}
+                  {profile.saveStatus === "error" && (
+                    <span className="inline-flex items-center gap-1 text-destructive">
+                      저장 실패
                     </span>
                   )}
                 </span>

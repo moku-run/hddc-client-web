@@ -80,6 +80,7 @@ export default function LoginPage() {
           <Label htmlFor="password">비밀번호</Label>
           <Link
             href="/auth/forgot-password"
+            tabIndex={-1}
             className="text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
           >
             비밀번호 찾기

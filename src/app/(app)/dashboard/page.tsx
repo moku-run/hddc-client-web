@@ -71,12 +71,45 @@ function StatCard({ icon: Icon, label, value, sub }: {
 
 
 export default function DashboardPage() {
-  const { profileData } = useProfileData();
-  const profileUrl = `${SITE_URL}/${profileData.slug || "yourname"}`;
+  const { profileData, hasProfile, isHydrated, loadStatus } = useProfileData();
+  const profileUrl = `${SITE_URL}/${profileData.slug}`;
 
   function copyLink() {
     navigator.clipboard.writeText(profileUrl);
     toast.success("링크가 복사되었습니다", { description: profileUrl });
+  }
+
+  if (!isHydrated || loadStatus === "loading") {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
+        <div className="h-[200px] animate-pulse rounded-xl border border-border bg-muted/30" />
+      </div>
+    );
+  }
+
+  if (!hasProfile) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
+        <div className="flex flex-col items-center gap-6 rounded-xl border border-dashed border-border bg-card p-12 text-center">
+          <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
+            <LinkIcon className="size-10 text-primary" weight="duotone" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">나만의 프로필 링크를 만들어보세요</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              SNS, 포트폴리오, 블로그를 하나의 링크로 연결하세요
+            </p>
+          </div>
+          <Button size="lg" asChild>
+            <Link href="/dashboard/edit">
+              <PencilSimple className="mr-2 size-4" />
+              프로필 만들기
+            </Link>
+          </Button>
+        </div>
+        <SiteFooter />
+      </div>
+    );
   }
 
   return (
@@ -110,7 +143,7 @@ export default function DashboardPage() {
             복사
           </Button>
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/${profileData.slug || "yourname"}`} target="_blank">
+            <Link href={`/${profileData.slug}`} target="_blank">
               <Eye className="mr-1 size-3.5" />
               미리보기
             </Link>

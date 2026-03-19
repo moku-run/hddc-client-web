@@ -42,17 +42,17 @@ export const FONT_FAMILY_CSS: Record<FontFamily, string> = {
 };
 
 export interface ProfileLink {
-  id: string;
+  id: number;
   title: string;
   url: string;
-  imageUrl: string;
-  description: string;
+  imageUrl: string | null;
+  description: string | null;
   order: number;
   enabled: boolean;
 }
 
 export interface SocialLink {
-  id: string;
+  id: number;
   platform: SocialPlatform;
   url: string;
 }

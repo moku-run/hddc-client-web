@@ -25,8 +25,10 @@ import { DragHandle } from "@/components/ui/drag-handle";
 import { Switch } from "@/components/ui/switch";
 import { ImageCropModal } from "./image-crop-modal";
 import { useSectionFocus, useEditFocus } from "@/contexts/edit-focus-context";
-import { cn } from "@/lib/utils";
+import { cn, dataUrlToFile } from "@/lib/utils";
 import { validateUrl, normalizeUrl } from "@/lib/validators";
+import { uploadImage } from "@/lib/api";
+import { toast } from "sonner";
 import type { ProfileLink, LinkLayout, LinkStyle, LinkAnimation } from "@/lib/profile-types";
 
 interface Props {
@@ -35,10 +37,10 @@ interface Props {
   linkStyle: LinkStyle;
   linkAnimation: LinkAnimation;
   addLink: () => void;
-  updateLink: (id: string, fields: Partial<Pick<ProfileLink, "title" | "url" | "imageUrl" | "description">>) => void;
-  removeLink: (id: string) => void;
-  toggleLink: (id: string) => void;
-  reorderLinks: (activeId: string, overId: string) => void;
+  updateLink: (id: number, fields: Partial<Pick<ProfileLink, "title" | "url" | "imageUrl" | "description">>) => void;
+  removeLink: (id: number) => void;
+  toggleLink: (id: number) => void;
+  reorderLinks: (activeId: number, overId: number) => void;
   setLinkLayout: (layout: LinkLayout) => void;
   setLinkStyle: (style: LinkStyle) => void;
   setLinkAnimation: (anim: LinkAnimation) => void;
@@ -90,7 +92,7 @@ const LINK_STYLES: ToggleGroupOption<LinkStyle>[] = [
 ];
 
 export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, addLink, updateLink, removeLink, toggleLink, reorderLinks, setLinkLayout, setLinkStyle, setLinkAnimation }: Props) {
-  const [cropLinkId, setCropLinkId] = useState("");
+  const [cropLinkId, setCropLinkId] = useState<number | null>(null);
   const cropLink = links.find((l) => l.id === cropLinkId);
   const sectionFocus = useSectionFocus("links");
   const { setActiveLinkId } = useEditFocus();
@@ -103,18 +105,23 @@ export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, ad
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      reorderLinks(active.id as string, over.id as string);
+      reorderLinks(active.id as number, over.id as number);
     },
     [reorderLinks],
   );
 
-  function handleCropApply(dataUrl: string) {
-    updateLink(cropLinkId, { imageUrl: dataUrl });
-    setCropLinkId("");
+  async function handleCropApply(dataUrl: string) {
+    if (cropLinkId == null) return;
+    setCropLinkId(null);
+    try {
+      const file = dataUrlToFile(dataUrl, "link.jpg");
+      const url = await uploadImage(file, "links");
+      updateLink(cropLinkId, { imageUrl: url });
+    } catch { toast.error("링크 이미지 업로드에 실패했습니다"); }
   }
 
   function handleCropCancel() {
-    setCropLinkId("");
+    setCropLinkId(null);
   }
 
   return (
@@ -156,7 +163,7 @@ export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, ad
                         src={link.imageUrl}
                         alt=""
                         className="size-12 rounded-full border border-border object-cover"
-                        onError={() => updateLink(link.id, { imageUrl: "" })}
+                        onError={() => updateLink(link.id, { imageUrl: null })}
                       />
                     ) : (
                       <div className="flex size-12 items-center justify-center rounded-full border border-dashed border-border bg-muted/50">
@@ -194,7 +201,7 @@ export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, ad
                     )}
                     <Input
                       placeholder="설명 (선택)"
-                      value={link.description}
+                      value={link.description ?? ""}
                       onChange={(e) => updateLink(link.id, { description: e.target.value.slice(0, 40) })}
                       className="h-6 text-[11px] text-muted-foreground"
                       maxLength={40}
@@ -224,7 +231,7 @@ export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, ad
       </Button>
 
       <ImageCropModal
-        open={!!cropLinkId}
+        open={cropLinkId != null}
         initialSrc={cropLink?.imageUrl || null}
         onApply={handleCropApply}
         onCancel={handleCropCancel}

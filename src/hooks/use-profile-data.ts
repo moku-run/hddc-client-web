@@ -3,38 +3,64 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   type ProfileData,
+  type ProfileLink,
+  type SocialLink,
   DEFAULT_PROFILE,
 } from "@/lib/profile-types";
+import { profileApi, ApiError, type ProfileResponse } from "@/lib/api";
 import { useHistory } from "./use-history";
 import { useLinkActions } from "./profile-actions/link-actions";
 import { useSocialActions } from "./profile-actions/social-actions";
 import { useThemeActions } from "./profile-actions/theme-actions";
 
-const STORAGE_KEY = "hddc-profile-data";
-const DEBOUNCE_MS = 1000;
 const HISTORY_DEBOUNCE_MS = 500;
 
-type SaveStatus = "idle" | "saving" | "saved";
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+type LoadStatus = "loading" | "loaded" | "error";
 
-function loadFromStorage(): ProfileData {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_PROFILE;
-    return { ...DEFAULT_PROFILE, ...JSON.parse(raw) };
-  } catch {
-    return DEFAULT_PROFILE;
-  }
-}
-
-function saveToStorage(data: ProfileData) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+/** 서버 응답 → 프론트 ProfileData 변환 */
+function toProfileData(res: ProfileResponse): ProfileData {
+  return {
+    slug: res.slug,
+    nickname: res.nickname,
+    bio: res.bio ?? "",
+    avatarUrl: res.avatarUrl,
+    backgroundUrl: res.backgroundUrl,
+    backgroundColor: res.backgroundColor,
+    fontColor: res.fontColor,
+    linkLayout: res.linkLayout as ProfileData["linkLayout"],
+    linkStyle: res.linkStyle as ProfileData["linkStyle"],
+    fontFamily: res.fontFamily as ProfileData["fontFamily"],
+    headerLayout: res.headerLayout as ProfileData["headerLayout"],
+    linkAnimation: res.linkAnimation as ProfileData["linkAnimation"],
+    colorTheme: res.colorTheme as ProfileData["colorTheme"],
+    customPrimaryColor: res.customPrimaryColor,
+    customSecondaryColor: res.customSecondaryColor,
+    darkMode: res.darkMode,
+    links: res.links.map((l): ProfileLink => ({
+      id: l.id,
+      title: l.title,
+      url: l.url,
+      imageUrl: l.imageUrl,
+      description: l.description,
+      order: l.order,
+      enabled: l.enabled,
+    })),
+    socials: res.socials.map((s): SocialLink => ({
+      id: s.id,
+      platform: s.platform as SocialLink["platform"],
+      url: s.url,
+    })),
+    plan: "free",
+  };
 }
 
 export function useProfileData() {
   const [profileData, setProfileData] = useState<ProfileData>(DEFAULT_PROFILE);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>("loading");
+  const [hasProfile, setHasProfile] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const historyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const initialized = useRef(false);
   const skipHistoryRef = useRef(false);
@@ -42,24 +68,39 @@ export function useProfileData() {
 
   const history = useHistory<ProfileData>(30);
 
+  // ─── 서버에서 프로필 로드 ───
   useEffect(() => {
-    const data = loadFromStorage();
-    setProfileData(data);
-    lastSnapshotRef.current = data;
-    initialized.current = true;
-    setIsHydrated(true);
-  }, []);
+    let cancelled = false;
 
-  useEffect(() => {
-    if (!initialized.current) return;
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      setSaveStatus("saving");
-      saveToStorage(profileData);
-      setTimeout(() => setSaveStatus("saved"), 300);
-    }, DEBOUNCE_MS);
-    return () => clearTimeout(timerRef.current);
-  }, [profileData]);
+    async function load() {
+      try {
+        const res = await profileApi.getMe();
+        if (cancelled || !res.payload) return;
+        const data = toProfileData(res.payload);
+        setProfileData(data);
+        lastSnapshotRef.current = data;
+        setHasProfile(true);
+        setLoadStatus("loaded");
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 404) {
+          setProfileData(DEFAULT_PROFILE);
+          setHasProfile(false);
+          setLoadStatus("loaded");
+        } else {
+          setLoadStatus("error");
+        }
+      } finally {
+        if (!cancelled) {
+          initialized.current = true;
+          setIsHydrated(true);
+        }
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   // Snapshot immediately before structural changes
   const snapshot = useCallback(() => {
@@ -124,24 +165,81 @@ export function useProfileData() {
     [setWithHistory],
   );
 
-  const resetProfile = useCallback(() => {
-    snapshot();
-    setProfileData(DEFAULT_PROFILE);
-    lastSnapshotRef.current = DEFAULT_PROFILE;
-    clearTimeout(timerRef.current);
-    saveToStorage(DEFAULT_PROFILE);
-  }, [snapshot]);
-
-  const saveNow = useCallback(() => {
-    clearTimeout(timerRef.current);
+  // ─── 서버에 저장 (PATCH) ───
+  const saveNow = useCallback(async () => {
     setSaveStatus("saving");
-    saveToStorage(profileData);
-    setTimeout(() => setSaveStatus("saved"), 300);
+    try {
+      const res = await profileApi.updateMe({
+        slug: profileData.slug,
+        nickname: profileData.nickname,
+        bio: profileData.bio || null,
+        avatarUrl: profileData.avatarUrl,
+        backgroundUrl: profileData.backgroundUrl,
+        backgroundColor: profileData.backgroundColor,
+        fontColor: profileData.fontColor,
+        linkLayout: profileData.linkLayout,
+        linkStyle: profileData.linkStyle,
+        fontFamily: profileData.fontFamily,
+        headerLayout: profileData.headerLayout,
+        linkAnimation: profileData.linkAnimation,
+        colorTheme: profileData.colorTheme,
+        customPrimaryColor: profileData.customPrimaryColor,
+        customSecondaryColor: profileData.customSecondaryColor,
+        darkMode: profileData.darkMode,
+        links: profileData.links.map((l) => ({
+          ...(l.id > 0 ? { id: l.id } : {}),
+          title: l.title,
+          url: l.url,
+          imageUrl: l.imageUrl,
+          description: l.description,
+          order: l.order,
+          enabled: l.enabled,
+        })),
+        socials: profileData.socials.map((s) => ({
+          ...(s.id > 0 ? { id: s.id } : {}),
+          platform: s.platform,
+          url: s.url,
+        })),
+      } as Record<string, unknown>);
+
+      // 서버 응답으로 상태 동기화 (서버가 발급한 id 등 반영)
+      if (res.payload) {
+        const synced = toProfileData(res.payload);
+        skipHistoryRef.current = true;
+        setProfileData(synced);
+        lastSnapshotRef.current = synced;
+        queueMicrotask(() => { skipHistoryRef.current = false; });
+      }
+
+      setHasProfile(true);
+      setSaveStatus("saved");
+    } catch {
+      setSaveStatus("error");
+    }
   }, [profileData]);
+
+  // ─── 초기화 (POST /reset) ───
+  const resetProfile = useCallback(async () => {
+    snapshot();
+    try {
+      await profileApi.resetMe();
+      const res = await profileApi.getMe();
+      if (res.payload) {
+        const data = toProfileData(res.payload);
+        setProfileData(data);
+        lastSnapshotRef.current = data;
+      }
+    } catch {
+      setProfileData(DEFAULT_PROFILE);
+      lastSnapshotRef.current = DEFAULT_PROFILE;
+    }
+  }, [snapshot]);
 
   return {
     profileData,
     isHydrated,
+    hasProfile,
+    loadStatus,
     saveStatus,
     updateProfile,
     ...linkActions,

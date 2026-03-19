@@ -12,7 +12,7 @@ import { contrastForeground } from "@/lib/color-utils";
 
 interface Props {
   profileData: ProfileData;
-  reorderLinks?: (activeId: string, overId: string) => void;
+  reorderLinks?: (activeId: number, overId: number) => void;
 }
 
 export function ProfilePreview({ profileData, reorderLinks }: Props) {
