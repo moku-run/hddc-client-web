@@ -349,6 +349,8 @@ interface Props {
   profileData: ProfileData;
   variant: "mobile" | "web";
   onReorderLinks?: (activeId: number, overId: number) => void;
+  /** 공개 페이지용 — 플레이스홀더/샘플 데이터 비활성 */
+  readonly?: boolean;
 }
 
 const SAMPLE_LINKS: ProfileLink[] = [
@@ -357,7 +359,7 @@ const SAMPLE_LINKS: ProfileLink[] = [
   { id: -9003, title: "나의 링크 3", url: "", imageUrl: null, description: null, order: 2, enabled: true },
 ];
 
-export function ProfilePreviewContent({ profileData, variant, onReorderLinks }: Props) {
+export function ProfilePreviewContent({ profileData, variant, onReorderLinks, readonly: isReadonly }: Props) {
   const { avatarUrl, backgroundUrl, backgroundColor, fontColor, nickname, bio, links, socials, linkLayout, linkStyle, linkAnimation, headerLayout, colorTheme, customSecondaryColor } = profileData;
   const isDefault = colorTheme === "default" || colorTheme === "white";
   const tint = colorTheme === "custom" && customSecondaryColor ? customSecondaryColor : undefined;
@@ -368,13 +370,13 @@ export function ProfilePreviewContent({ profileData, variant, onReorderLinks }: 
   };
   const hasContainerStyle = backgroundColor || fontColor;
 
-  // 섹션별 플레이스홀더 여부
-  const isPlaceholderNickname = !nickname;
-  const isPlaceholderBio = !bio;
-  const isPlaceholderLinks = links.length === 0;
-  const displayNickname = nickname || "닉네임";
-  const displayBio = bio || "프로필을 편집해서 꾸며보세요";
-  const displayLinks = links.length > 0 ? links : SAMPLE_LINKS;
+  // 섹션별 플레이스홀더 여부 (readonly면 플레이스홀더 없음)
+  const isPlaceholderNickname = !isReadonly && !nickname;
+  const isPlaceholderBio = !isReadonly && !bio;
+  const isPlaceholderLinks = !isReadonly && links.length === 0;
+  const displayNickname = nickname || (isReadonly ? "" : "닉네임");
+  const displayBio = bio || (isReadonly ? "" : "프로필을 편집해서 꾸며보세요");
+  const displayLinks = links.length > 0 ? links.filter((l) => isReadonly ? l.enabled : true) : (isReadonly ? [] : SAMPLE_LINKS);
 
   if (variant === "mobile") {
     return (

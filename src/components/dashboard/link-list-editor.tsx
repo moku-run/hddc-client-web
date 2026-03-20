@@ -234,10 +234,15 @@ export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, ad
 
       <ImageCropModal
         open={cropLinkId != null}
+        variant="circle"
         initialSrc={cropLinkImageSrc}
         onApply={handleCropApply}
         onCancel={handleCropCancel}
-        linkTitle={cropLink?.title}
+        onRemove={cropLink?.imageUrl ? () => {
+          if (cropLinkId != null) updateLink(cropLinkId, { imageUrl: null });
+          setCropLinkId(null);
+        } : undefined}
+        modalTitle="링크 이미지 편집"
       />
     </section>
   );

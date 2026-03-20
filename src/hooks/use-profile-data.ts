@@ -20,7 +20,7 @@ type SaveStatus = "idle" | "saving" | "saved" | "error";
 type LoadStatus = "loading" | "loaded" | "error";
 
 /** 서버 응답 → 프론트 ProfileData 변환 */
-function toProfileData(res: ProfileResponse): ProfileData {
+export function toProfileData(res: ProfileResponse): ProfileData {
   return {
     slug: res.slug,
     nickname: res.nickname,
