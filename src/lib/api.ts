@@ -122,11 +122,16 @@ export const authApi = {
   },
 
   logout() {
-    return request("/api/auth/logout", { method: "POST" }).finally(() => {
-      localStorage.removeItem("hddc-auth");
-      localStorage.removeItem("hddc-token");
-      localStorage.removeItem("hddc-user");
-    });
+    const token = typeof window !== "undefined" ? localStorage.getItem("hddc-token") : null;
+    fetch("/api/auth/logout", {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }).catch(() => {});
+    localStorage.removeItem("hddc-auth");
+    localStorage.removeItem("hddc-token");
+    localStorage.removeItem("hddc-user");
   },
 };
 
@@ -244,6 +249,10 @@ export const profileApi = {
 
   resetMe() {
     return request("/api/profiles/me/reset", { method: "POST" });
+  },
+
+  getBySlug(slug: string) {
+    return request<ProfileResponse>(`/api/profiles/${encodeURIComponent(slug)}`);
   },
 
   checkSlug(slug: string) {

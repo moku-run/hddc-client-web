@@ -8,6 +8,7 @@ import {
   DEFAULT_PROFILE,
 } from "@/lib/profile-types";
 import { profileApi, ApiError, type ProfileResponse } from "@/lib/api";
+import { toast } from "sonner";
 import { useHistory } from "./use-history";
 import { useLinkActions } from "./profile-actions/link-actions";
 import { useSocialActions } from "./profile-actions/social-actions";
@@ -166,7 +167,7 @@ export function useProfileData() {
   );
 
   // ─── 서버에 저장 (PATCH) ───
-  const saveNow = useCallback(async () => {
+  const saveNow = useCallback(async (): Promise<boolean> => {
     setSaveStatus("saving");
     try {
       const res = await profileApi.updateMe({
@@ -213,8 +214,15 @@ export function useProfileData() {
 
       setHasProfile(true);
       setSaveStatus("saved");
-    } catch {
+      return true;
+    } catch (err) {
       setSaveStatus("error");
+      if (err instanceof ApiError) {
+        toast.error(err.message);
+      } else {
+        toast.error("저장에 실패했습니다");
+      }
+      return false;
     }
   }, [profileData]);
 

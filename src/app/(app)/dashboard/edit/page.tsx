@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useProfileData } from "@/hooks/use-profile-data";
 import { ProfileEditor } from "@/components/dashboard/profile-editor";
 import { ProfilePreview } from "@/components/dashboard/profile-preview";
@@ -18,6 +19,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://hotdeal.cool";
 
 export default function ProfileEditPage() {
+  const router = useRouter();
   const profile = useProfileData();
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
 
@@ -146,7 +148,10 @@ export default function ProfileEditPage() {
                 </Button>
                 <Button
                   size="sm"
-                  onClick={profile.saveNow}
+                  onClick={async () => {
+                    const ok = await profile.saveNow();
+                    if (ok) router.push("/dashboard");
+                  }}
                   className="h-8 text-xs"
                 >
                   <FloppyDisk className="mr-1 size-3.5" />
