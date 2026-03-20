@@ -131,10 +131,10 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-lg font-bold">{profileData.nickname || "닉네임을 설정하세요"}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">{profileData.bio || "한 줄 소개를 작성해보세요"}</p>
-            <div className="mt-1 flex items-center gap-1 text-xs text-primary">
+            <Link href={`/${profileData.slug}`} target="_blank" className="mt-1 flex items-center gap-1 text-xs text-primary hover:underline">
               <LinkIcon className="size-3" />
               <span>{profileUrl}</span>
-            </div>
+            </Link>
           </div>
         </div>
         <div className="flex gap-2">

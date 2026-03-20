@@ -95,19 +95,6 @@ export function PhonePreviewFrame({
             onMouseLeave={onMouseUp}
           >
             <div className="flex-1">{children}</div>
-            {/* Footer */}
-            <div
-              className="shrink-0 py-3 text-center"
-              style={backgroundColor ? { backgroundColor } : undefined}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <span
-                className="cursor-default text-xs"
-                style={{ color: backgroundColor ? contrastColor(backgroundColor) : undefined }}
-              >
-                핫딜닷쿨
-              </span>
-            </div>
           </div>
         </div>
       </div>
@@ -159,16 +146,6 @@ export function BrowserPreviewFrame({
         <div className="flex flex-1 flex-col overflow-y-auto overscroll-none bg-background">
           <div className="flex-1 p-6">
             {children}
-          </div>
-          {/* Footer */}
-          <div className="shrink-0 py-3 text-center" style={backgroundColor ? { backgroundColor } : undefined}>
-            <a
-              href="/"
-              className="text-[10px] transition-colors"
-              style={{ color: backgroundColor ? contrastColor(backgroundColor) : undefined }}
-            >
-              핫딜닷쿨
-            </a>
           </div>
         </div>
       </div>

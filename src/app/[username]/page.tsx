@@ -7,7 +7,6 @@ import { isReservedSlug } from "@/lib/reserved-slugs";
 import { profileApi, ApiError } from "@/lib/api";
 import { toProfileData } from "@/hooks/use-profile-data";
 import { ProfilePreviewContent } from "@/components/dashboard/profile-preview-content";
-import { SponsorBanner } from "@/components/sponsor-banner";
 import { FONT_FAMILY_CSS, type ProfileData } from "@/lib/profile-types";
 import { loadFont } from "@/lib/font-loader";
 import { contrastForeground } from "@/lib/color-utils";
@@ -80,14 +79,13 @@ export default function ProfilePage({ params }: Props) {
       className={`flex min-h-svh flex-col ${darkClass}`}
       style={customStyle}
     >
-      <main className="mx-auto w-full max-w-lg flex-1">
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col">
         <ProfilePreviewContent
           profileData={profileData}
           variant="mobile"
           readonly
         />
       </main>
-      <SponsorBanner plan={profileData.plan} />
     </div>
   );
 }

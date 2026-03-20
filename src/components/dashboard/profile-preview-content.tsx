@@ -486,7 +486,7 @@ export function ProfilePreviewContent({ profileData, variant, onReorderLinks, re
         )}
 
         {/* Sponsor banner for free plan */}
-        <SponsorBanner plan={profileData.plan} className="mt-auto -mx-4 -mb-4 border-t-0 rounded-b-lg" />
+        <SponsorBanner plan={profileData.plan} className="mt-auto -mx-4 w-[calc(100%+2rem)] border-t-0" />
       </div>
     );
   }
