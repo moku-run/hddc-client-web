@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { HexColorPicker, HexColorInput } from "react-colorful";
 import { type ColorTheme } from "@/hooks/use-color-theme";
 import { Sun, Moon, Palette } from "@phosphor-icons/react";
-import { FONT_FAMILY_LABELS, FONT_FAMILY_CSS, type FontFamily } from "@/lib/profile-types";
+import { FONT_FAMILY_LABELS, FONT_FAMILY_CSS, type FontFamily, type BackgroundTexture } from "@/lib/profile-types";
 import { autoSecondary } from "@/lib/color-utils";
 import { PRESET_THEMES, THEME_COLORS, THEME_LABELS, BG_PALETTE, needsSwatchBorder } from "@/lib/theme-constants";
 import { useSectionFocus } from "@/contexts/edit-focus-context";
@@ -31,11 +31,21 @@ const TEXT_PALETTE = [
   "#15803d", "#0d9488", "#0891b2", "#0284c7", "#2563eb", "#4f46e5", "#7c3aed", "#9333ea",
 ];
 
+const TEXTURES: { value: BackgroundTexture | null; label: string }[] = [
+  { value: null, label: "없음" },
+  { value: "paper", label: "종이" },
+  { value: "linen", label: "린넨" },
+  { value: "concrete", label: "콘크리트" },
+  { value: "fabric", label: "패브릭" },
+  { value: "noise", label: "노이즈" },
+];
+
 interface Props {
   colorTheme: ColorTheme;
   darkMode: boolean;
   backgroundColor: string | null;
   fontColor: string | null;
+  backgroundTexture: BackgroundTexture | null;
   customPrimaryColor: string | null;
   customSecondaryColor: string | null;
   fontFamily: FontFamily;
@@ -43,14 +53,15 @@ interface Props {
   setDarkMode: (dark: boolean) => void;
   setBackgroundColor: (color: string | null) => void;
   setFontColor: (color: string | null) => void;
+  setBackgroundTexture: (texture: BackgroundTexture | null) => void;
   setCustomColors: (primary: string, secondary: string) => void;
   setFontFamily: (font: FontFamily) => void;
 }
 
 export function ThemeEditor({
-  colorTheme, darkMode, backgroundColor, fontColor,
+  colorTheme, darkMode, backgroundColor, fontColor, backgroundTexture,
   customPrimaryColor, customSecondaryColor, fontFamily,
-  setColorTheme, setDarkMode, setBackgroundColor, setFontColor, setCustomColors, setFontFamily,
+  setColorTheme, setDarkMode, setBackgroundColor, setFontColor, setBackgroundTexture, setCustomColors, setFontFamily,
 }: Props) {
   const sectionFocus = useSectionFocus("theme");
 
@@ -235,6 +246,34 @@ export function ThemeEditor({
           color={backgroundColor || "#ffffff"}
           onChange={(color) => setBackgroundColor(color)}
         />
+      </div>
+
+      {/* Background texture */}
+      <div>
+        <p className="mb-2 text-xs text-muted-foreground">배경 텍스처</p>
+        <div className="grid grid-cols-3 gap-1.5">
+          {TEXTURES.map(({ value, label }) => (
+            <button
+              key={label}
+              onClick={() => setBackgroundTexture(value)}
+              className={cn(
+                "flex h-14 cursor-pointer items-end justify-center rounded-lg border p-1.5 text-[10px] font-medium transition-all",
+                backgroundTexture === value
+                  ? "ring-2 ring-foreground ring-offset-2 ring-offset-background"
+                  : "border-border hover:border-foreground/30",
+              )}
+              style={value ? {
+                backgroundImage: `url(/textures/${value}.svg)`,
+                backgroundSize: '80px',
+                backgroundRepeat: 'repeat',
+                backgroundColor: backgroundColor || '#f5f5f5',
+                backgroundBlendMode: 'multiply',
+              } : { backgroundColor: backgroundColor || '#f5f5f5' }}
+            >
+              <span className="rounded bg-background/80 px-1 py-0.5">{label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Font color */}

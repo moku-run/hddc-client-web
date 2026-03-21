@@ -225,6 +225,13 @@ export interface ProfileResponse {
   colorTheme: string;
   customPrimaryColor: string | null;
   customSecondaryColor: string | null;
+  backgroundTexture: string | null;
+  decorator1Type: string | null;
+  decorator1Text: string | null;
+  decorator2Type: string | null;
+  decorator2Text: string | null;
+  linkGradientFrom: string | null;
+  linkGradientTo: string | null;
   darkMode: boolean;
   links: ProfileLinkResponse[];
   socials: SocialLinkResponse[];

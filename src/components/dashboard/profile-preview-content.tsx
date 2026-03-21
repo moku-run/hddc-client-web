@@ -19,7 +19,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { R2Image } from "@/components/ui/r2-image";
 import { useEditFocus, type EditSection } from "@/contexts/edit-focus-context";
-import { type ProfileData, type ProfileLink, type LinkLayout, type LinkStyle, type LinkAnimation } from "@/lib/profile-types";
+import { type ProfileData, type ProfileLink, type LinkLayout, type LinkStyle, type LinkRound, type LinkAnimation, type DecoratorType } from "@/lib/profile-types";
 import { SponsorBanner } from "@/components/sponsor-banner";
 import {
   InstagramLogo,
@@ -104,23 +104,27 @@ function Avatar({ src, isDefault }: { src: string | null; isDefault?: boolean })
 
 /* ─── Link style utilities ─── */
 
+function getLinkRoundClass(round: LinkRound): string {
+  switch (round) {
+    case "none": return "!rounded-none";
+    case "sm": return "!rounded-lg";
+    case "md": return "!rounded-2xl";
+    case "lg": return "!rounded-full";
+    default: return "!rounded-lg";
+  }
+}
+
 function getLinkStyleClasses(style: LinkStyle, isDefault: boolean): string {
   switch (style) {
-    case "outline":
-      return isDefault
-        ? "border-2 border-foreground bg-transparent text-foreground"
-        : "border-2 border-primary bg-transparent hover:bg-primary/5";
+    case "none":
+      return "border-0 bg-transparent";
     case "shadow":
       return cn("border-0 shadow-md hover:shadow-lg",
         isDefault ? "bg-background text-foreground" : "bg-primary/8");
-    case "rounded":
-      return cn("!rounded-2xl", isDefault
-        ? "border-foreground bg-background text-foreground"
-        : "border-primary/15 bg-primary/8 hover:bg-primary/12");
-    case "pill":
-      return cn("!rounded-full", isDefault
-        ? "border-foreground bg-background text-foreground"
-        : "border-primary/15 bg-primary/8 hover:bg-primary/12");
+    case "glass":
+      return cn("border-0", "liquid-glass");
+    case "gradient":
+      return "border-0 text-white";
     case "fill":
     default:
       return isDefault
@@ -195,15 +199,24 @@ function SortableLinkItem({
 
 /* ─── Link renderers per layout ─── */
 
-function ListLinkItem({ link, isDefault, tint, linkStyle = "fill" }: { link: ProfileLink; isDefault?: boolean; tint?: string; linkStyle?: LinkStyle }) {
+function buildLinkStyle(linkStyle: LinkStyle, tint?: string, gradientFrom?: string, gradientTo?: string): React.CSSProperties | undefined {
+  if (tint) return { backgroundColor: tint };
+  if (linkStyle === "gradient" && gradientFrom && gradientTo) {
+    return { background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})` };
+  }
+  return undefined;
+}
+
+function ListLinkItem({ link, isDefault, tint, linkStyle = "fill", linkRound = "sm", gradientFrom, gradientTo }: { link: ProfileLink; isDefault?: boolean; tint?: string; linkStyle?: LinkStyle; linkRound?: LinkRound; gradientFrom?: string; gradientTo?: string }) {
   return (
     <div
       className={cn(
         "flex h-12 items-center gap-3 rounded-xl border px-3 text-sm font-medium transition-colors",
         tint ? "border-primary/15" : getLinkStyleClasses(linkStyle, !!isDefault),
+        getLinkRoundClass(linkRound),
         !link.enabled && "opacity-40",
       )}
-      style={tint ? { backgroundColor: tint } : undefined}
+      style={buildLinkStyle(linkStyle, tint, gradientFrom, gradientTo)}
     >
       {link.imageUrl ? <LinkImage src={link.imageUrl} isDefault={isDefault} /> : <DefaultLinkIcon isDefault={isDefault} />}
       <div className="min-w-0 flex-1">
@@ -216,15 +229,16 @@ function ListLinkItem({ link, isDefault, tint, linkStyle = "fill" }: { link: Pro
   );
 }
 
-function Grid2LinkItem({ link, isDefault, tint, linkStyle = "fill" }: { link: ProfileLink; isDefault?: boolean; tint?: string; linkStyle?: LinkStyle }) {
+function Grid2LinkItem({ link, isDefault, tint, linkStyle = "fill", linkRound = "sm", gradientFrom, gradientTo }: { link: ProfileLink; isDefault?: boolean; tint?: string; linkStyle?: LinkStyle; linkRound?: LinkRound; gradientFrom?: string; gradientTo?: string }) {
   return (
     <div
       className={cn(
         "flex flex-col items-center gap-2 rounded-xl border p-3 transition-colors",
         tint ? "border-primary/15" : getLinkStyleClasses(linkStyle, !!isDefault),
+        getLinkRoundClass(linkRound),
         !link.enabled && "opacity-40",
       )}
-      style={tint ? { backgroundColor: tint } : undefined}
+      style={buildLinkStyle(linkStyle, tint, gradientFrom, gradientTo)}
     >
       {link.imageUrl ? <LinkImage src={link.imageUrl} size="size-12" isDefault={isDefault} /> : <DefaultLinkIcon size="size-12" isDefault={isDefault} />}
       <span className={cn("w-full truncate text-center text-xs font-medium", !link.enabled && "line-through")}>{link.title || "제목 없음"}</span>
@@ -232,20 +246,43 @@ function Grid2LinkItem({ link, isDefault, tint, linkStyle = "fill" }: { link: Pr
   );
 }
 
-function Grid3LinkItem({ link, isDefault, tint, linkStyle = "fill" }: { link: ProfileLink; isDefault?: boolean; tint?: string; linkStyle?: LinkStyle }) {
+function Grid3LinkItem({ link, isDefault, tint, linkStyle = "fill", linkRound = "sm", gradientFrom, gradientTo }: { link: ProfileLink; isDefault?: boolean; tint?: string; linkStyle?: LinkStyle; linkRound?: LinkRound; gradientFrom?: string; gradientTo?: string }) {
   return (
     <div
       className={cn(
         "flex flex-col items-center gap-1.5 rounded-lg border p-2 transition-colors",
         tint ? "border-primary/15" : getLinkStyleClasses(linkStyle, !!isDefault),
+        getLinkRoundClass(linkRound),
         !link.enabled && "opacity-40",
       )}
-      style={tint ? { backgroundColor: tint } : undefined}
+      style={buildLinkStyle(linkStyle, tint, gradientFrom, gradientTo)}
     >
       {link.imageUrl ? <LinkImage src={link.imageUrl} size="size-10" isDefault={isDefault} /> : <DefaultLinkIcon size="size-10" isDefault={isDefault} />}
       <span className={cn("w-full truncate text-center text-[10px] font-medium", !link.enabled && "line-through")}>{link.title || "제목 없음"}</span>
     </div>
   );
+}
+
+/* ─── Section Decorator ─── */
+
+function SectionDecorator({ type, text, fontColor }: { type: DecoratorType; text?: string | null; fontColor?: string | null }) {
+  if (type === "text") {
+    return <p className="w-full text-center text-xs opacity-70" style={fontColor ? { color: fontColor } : undefined}>{text || ""}</p>;
+  }
+  if (type === "divider-line") {
+    return <div className="w-full border-t border-current opacity-15" />;
+  }
+  if (type === "divider-dots") {
+    return <div className="w-full border-t border-dotted border-current opacity-15" />;
+  }
+  if (type === "divider-wave") {
+    return (
+      <svg viewBox="0 0 200 10" className="w-full opacity-15" preserveAspectRatio="none">
+        <path d="M0 5 Q25 0 50 5 T100 5 T150 5 T200 5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+    );
+  }
+  return null;
 }
 
 /* ─── Links section with DnD ─── */
@@ -254,22 +291,28 @@ function LinksSection({
   links,
   linkLayout,
   linkStyle,
+  linkRound = "sm",
   linkAnimation = "none",
   activeSection,
   activeLinkId,
   onReorderLinks,
   isDefault,
   tint,
+  gradientFrom,
+  gradientTo,
 }: {
   links: ProfileLink[];
   linkLayout: LinkLayout;
   linkStyle: LinkStyle;
+  linkRound?: LinkRound;
   linkAnimation?: LinkAnimation;
   activeSection: EditSection;
   activeLinkId: number | null;
   onReorderLinks?: (activeId: number, overId: number) => void;
   isDefault?: boolean;
   tint?: string;
+  gradientFrom?: string;
+  gradientTo?: string;
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -326,11 +369,11 @@ function LinksSection({
                     style={animDelay}
                   >
                     {linkLayout === "grid-3" ? (
-                      <Grid3LinkItem link={link} isDefault={isDefault} tint={tint} linkStyle={linkStyle} />
+                      <Grid3LinkItem link={link} isDefault={isDefault} tint={tint} linkStyle={linkStyle} linkRound={linkRound} gradientFrom={gradientFrom} gradientTo={gradientTo} />
                     ) : linkLayout === "grid-2" ? (
-                      <Grid2LinkItem link={link} isDefault={isDefault} tint={tint} linkStyle={linkStyle} />
+                      <Grid2LinkItem link={link} isDefault={isDefault} tint={tint} linkStyle={linkStyle} linkRound={linkRound} gradientFrom={gradientFrom} gradientTo={gradientTo} />
                     ) : (
-                      <ListLinkItem link={link} isDefault={isDefault} tint={tint} linkStyle={linkStyle} />
+                      <ListLinkItem link={link} isDefault={isDefault} tint={tint} linkStyle={linkStyle} linkRound={linkRound} gradientFrom={gradientFrom} gradientTo={gradientTo} />
                     )}
                   </div>
                 </SortableLinkItem>
@@ -360,15 +403,21 @@ const SAMPLE_LINKS: ProfileLink[] = [
 ];
 
 export function ProfilePreviewContent({ profileData, variant, onReorderLinks, readonly: isReadonly }: Props) {
-  const { avatarUrl, backgroundUrl, backgroundColor, fontColor, nickname, bio, links, socials, linkLayout, linkStyle, linkAnimation, headerLayout, colorTheme, customSecondaryColor } = profileData;
+  const { avatarUrl, backgroundUrl, backgroundColor, fontColor, nickname, bio, links, socials, linkLayout, linkStyle, linkRound, linkAnimation, headerLayout, colorTheme, customSecondaryColor, backgroundTexture, decorator1Type, decorator1Text, decorator2Type, decorator2Text, linkGradientFrom, linkGradientTo } = profileData;
   const isDefault = colorTheme === "default" || colorTheme === "white";
   const tint = colorTheme === "custom" && customSecondaryColor ? customSecondaryColor : undefined;
   const { activeSection, activeLinkId } = useEditFocus();
   const containerStyle: React.CSSProperties = {
     ...(backgroundColor ? { backgroundColor } : {}),
     ...(fontColor ? { color: fontColor } : {}),
+    ...(backgroundTexture ? {
+      backgroundImage: `url(/textures/${backgroundTexture}.svg)`,
+      backgroundRepeat: 'repeat',
+      backgroundSize: '200px',
+      backgroundBlendMode: 'multiply',
+    } as React.CSSProperties : {}),
   };
-  const hasContainerStyle = backgroundColor || fontColor;
+  const hasContainerStyle = backgroundColor || fontColor || backgroundTexture;
 
   // 섹션별 플레이스홀더 여부 (readonly면 플레이스홀더 없음)
   const isPlaceholderNickname = !isReadonly && !nickname;
@@ -454,20 +503,29 @@ export function ProfilePreviewContent({ profileData, variant, onReorderLinks, re
           </div>
         )}
 
+        {/* Decorator 1: between header and links */}
+        {decorator1Type && <SectionDecorator type={decorator1Type} text={decorator1Text} fontColor={fontColor} />}
+
         {/* Links with DnD */}
         <div className={cn("w-full", isPlaceholderLinks && "opacity-50")}>
           <LinksSection
             links={displayLinks}
             linkLayout={linkLayout}
             linkStyle={linkStyle}
+            linkRound={linkRound}
             linkAnimation={linkAnimation}
             activeSection={activeSection}
             activeLinkId={activeLinkId}
             onReorderLinks={isPlaceholderLinks ? undefined : onReorderLinks}
             isDefault={isDefault}
             tint={tint}
+            gradientFrom={linkGradientFrom ?? undefined}
+            gradientTo={linkGradientTo ?? undefined}
           />
         </div>
+
+        {/* Decorator 2: between links and socials */}
+        {decorator2Type && <SectionDecorator type={decorator2Type} text={decorator2Text} fontColor={fontColor} />}
 
         {/* Social icons */}
         {socials.length > 0 && (
@@ -541,10 +599,13 @@ export function ProfilePreviewContent({ profileData, variant, onReorderLinks, re
             links={displayLinks}
             linkLayout={linkLayout}
             linkStyle={linkStyle}
+            linkRound={linkRound}
             linkAnimation={linkAnimation}
             activeSection={activeSection}
             activeLinkId={activeLinkId}
             onReorderLinks={isPlaceholderLinks ? undefined : onReorderLinks}
+            gradientFrom={linkGradientFrom ?? undefined}
+            gradientTo={linkGradientTo ?? undefined}
           />
         </div>
       </div>

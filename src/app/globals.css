@@ -144,3 +144,53 @@ summary,
 [type="radio"] {
   cursor: pointer;
 }
+
+/* ─── Liquid Glass ─── */
+.liquid-glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 33%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.15) 100%),
+    rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 16px 16px 9px -18px rgba(255, 255, 255, 0.5),
+    inset -12px -12px 6px -14px rgba(179, 179, 179, 0.4),
+    inset 2px 2px 1px -2px rgba(179, 179, 179, 0.6),
+    inset 0 0 22px rgba(242, 242, 242, 0.15),
+    0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
+}
+
+.liquid-glass:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 33%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.2) 100%),
+    rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 16px 16px 9px -18px rgba(255, 255, 255, 0.6),
+    inset -12px -12px 6px -14px rgba(179, 179, 179, 0.5),
+    inset 2px 2px 1px -2px rgba(179, 179, 179, 0.7),
+    inset 0 0 22px rgba(242, 242, 242, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+:is(.dark) .liquid-glass {
+  background:
+    linear-gradient(180deg, rgba(102, 102, 102, 0.2) 0%, rgba(102, 102, 102, 0) 33%),
+    linear-gradient(180deg, rgba(102, 102, 102, 0) 50%, rgba(102, 102, 102, 0.4) 100%),
+    rgba(29, 29, 29, 0.6);
+  box-shadow:
+    inset 16px 16px 9px -18px rgba(255, 255, 255, 0.3),
+    inset -12px -12px 6px -14px rgba(179, 179, 179, 0.2),
+    inset 2px 2px 1px -2px rgba(179, 179, 179, 0.3),
+    inset 0 0 22px rgba(242, 242, 242, 0.1),
+    0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+:is(.dark) .liquid-glass:hover {
+  background:
+    linear-gradient(180deg, rgba(102, 102, 102, 0.3) 0%, rgba(102, 102, 102, 0) 33%),
+    linear-gradient(180deg, rgba(102, 102, 102, 0) 50%, rgba(102, 102, 102, 0.5) 100%),
+    rgba(29, 29, 29, 0.7);
+}

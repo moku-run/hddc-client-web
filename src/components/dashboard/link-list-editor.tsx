@@ -31,13 +31,17 @@ import { cn, dataUrlToFile } from "@/lib/utils";
 import { validateUrl, normalizeUrl } from "@/lib/validators";
 import { uploadImage } from "@/lib/api";
 import { toast } from "sonner";
-import type { ProfileLink, LinkLayout, LinkStyle, LinkAnimation } from "@/lib/profile-types";
+import { ColorPickerPopover } from "@/components/ui/color-picker-popover";
+import type { ProfileLink, LinkLayout, LinkStyle, LinkRound, LinkAnimation } from "@/lib/profile-types";
 
 interface Props {
   links: ProfileLink[];
   linkLayout: LinkLayout;
   linkStyle: LinkStyle;
+  linkRound: LinkRound;
   linkAnimation: LinkAnimation;
+  linkGradientFrom: string | null;
+  linkGradientTo: string | null;
   addLink: () => void;
   updateLink: (id: number, fields: Partial<Pick<ProfileLink, "title" | "url" | "imageUrl" | "description">>) => void;
   removeLink: (id: number) => void;
@@ -45,7 +49,9 @@ interface Props {
   reorderLinks: (activeId: number, overId: number) => void;
   setLinkLayout: (layout: LinkLayout) => void;
   setLinkStyle: (style: LinkStyle) => void;
+  setLinkRound: (round: LinkRound) => void;
   setLinkAnimation: (anim: LinkAnimation) => void;
+  setLinkGradient: (from: string | null, to: string | null) => void;
 }
 
 const LAYOUTS: ToggleGroupOption<LinkLayout>[] = [
@@ -86,14 +92,21 @@ const LINK_ANIMATIONS: ToggleGroupOption<LinkAnimation>[] = [
 ];
 
 const LINK_STYLES: ToggleGroupOption<LinkStyle>[] = [
+  { value: "none", label: "없음" },
   { value: "fill", label: "채움" },
-  { value: "outline", label: "아웃라인" },
   { value: "shadow", label: "그림자" },
-  { value: "rounded", label: "라운드" },
-  { value: "pill", label: "캡슐" },
+  { value: "glass", label: "글래스" },
+  { value: "gradient", label: "그라데이션" },
 ];
 
-export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, addLink, updateLink, removeLink, toggleLink, reorderLinks, setLinkLayout, setLinkStyle, setLinkAnimation }: Props) {
+const LINK_ROUNDS: ToggleGroupOption<LinkRound>[] = [
+  { value: "none", label: "직각" },
+  { value: "sm", label: "조금" },
+  { value: "md", label: "중간" },
+  { value: "lg", label: "많이" },
+];
+
+export function LinkListEditor({ links, linkLayout, linkStyle, linkRound, linkAnimation, linkGradientFrom, linkGradientTo, addLink, updateLink, removeLink, toggleLink, reorderLinks, setLinkLayout, setLinkStyle, setLinkRound, setLinkAnimation, setLinkGradient }: Props) {
   const [cropLinkId, setCropLinkId] = useState<number | null>(null);
   const cropLink = links.find((l) => l.id === cropLinkId);
   const cropLinkImageSrc = useImageUrl(cropLink?.imageUrl ?? null);
@@ -141,6 +154,42 @@ export function LinkListEditor({ links, linkLayout, linkStyle, linkAnimation, ad
       <div className="flex items-center gap-1">
         <span className="mr-1 text-[11px] text-muted-foreground">스타일</span>
         <ToggleGroup variant="square" value={linkStyle} onValueChange={setLinkStyle} options={LINK_STYLES} />
+      </div>
+
+      {/* Gradient color pickers — visible only when gradient style is selected */}
+      {linkStyle === "gradient" && (
+        <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3">
+          <div className="flex items-center gap-2">
+            <div
+              className="h-6 flex-1 rounded-md border border-border"
+              style={{
+                background: `linear-gradient(135deg, ${linkGradientFrom || "#6366f1"}, ${linkGradientTo || "#ec4899"})`,
+              }}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <ColorPickerPopover
+              color={linkGradientFrom || "#6366f1"}
+              onChange={(c) => setLinkGradient(c, linkGradientTo || "#ec4899")}
+              triggerLabel="시작 색"
+              width="220px"
+              triggerClassName="mt-0 h-8 text-[11px]"
+            />
+            <ColorPickerPopover
+              color={linkGradientTo || "#ec4899"}
+              onChange={(c) => setLinkGradient(linkGradientFrom || "#6366f1", c)}
+              triggerLabel="끝 색"
+              width="220px"
+              triggerClassName="mt-0 h-8 text-[11px]"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Round selector */}
+      <div className="flex items-center gap-1">
+        <span className="mr-1 text-[11px] text-muted-foreground">라운드</span>
+        <ToggleGroup variant="square" value={linkRound} onValueChange={setLinkRound} options={LINK_ROUNDS} />
       </div>
 
       {/* Animation selector */}

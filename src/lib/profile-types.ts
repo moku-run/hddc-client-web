@@ -15,11 +15,17 @@ export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
 
 export type LinkLayout = "list" | "grid-2" | "grid-3";
 
-export type LinkStyle = "fill" | "outline" | "shadow" | "rounded" | "pill";
+export type LinkStyle = "none" | "fill" | "shadow" | "glass" | "gradient";
+
+export type LinkRound = "none" | "sm" | "md" | "lg";
 
 export type HeaderLayout = "center" | "left" | "avatar-only" | "banner-only";
 
 export type LinkAnimation = "none" | "fade-in" | "slide-up" | "scale" | "stagger";
+
+export type BackgroundTexture = "paper" | "linen" | "concrete" | "fabric" | "noise";
+
+export type DecoratorType = "text" | "divider-line" | "divider-dots" | "divider-wave";
 
 export type FontFamily = "pretendard" | "noto-sans" | "nanum-gothic" | "nanum-myeongjo" | "gmarket-sans" | "suit";
 
@@ -70,6 +76,7 @@ export interface ProfileData {
   socials: SocialLink[];
   linkLayout: LinkLayout;
   linkStyle: LinkStyle;
+  linkRound: LinkRound;
   fontFamily: FontFamily;
   headerLayout: HeaderLayout;
   linkAnimation: LinkAnimation;
@@ -77,6 +84,13 @@ export interface ProfileData {
   customPrimaryColor: string | null;
   customSecondaryColor: string | null;
   fontColor: string | null;
+  backgroundTexture: BackgroundTexture | null;
+  decorator1Type: DecoratorType | null;
+  decorator1Text: string | null;
+  decorator2Type: DecoratorType | null;
+  decorator2Text: string | null;
+  linkGradientFrom: string | null;
+  linkGradientTo: string | null;
   darkMode: boolean;
   plan: PlanType;
 }
@@ -93,12 +107,20 @@ export const DEFAULT_PROFILE: ProfileData = {
   socials: [],
   linkLayout: "list",
   linkStyle: "fill",
+  linkRound: "sm",
   fontFamily: "pretendard",
   headerLayout: "center",
   linkAnimation: "none",
   colorTheme: "default",
   customPrimaryColor: null,
   customSecondaryColor: null,
+  backgroundTexture: null,
+  decorator1Type: null,
+  decorator1Text: null,
+  decorator2Type: null,
+  decorator2Text: null,
+  linkGradientFrom: null,
+  linkGradientTo: null,
   darkMode: false,
   plan: "free",
 };

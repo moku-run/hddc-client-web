@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { ProfileData, LinkLayout, LinkStyle, FontFamily, HeaderLayout, LinkAnimation } from "@/lib/profile-types";
+import type { ProfileData, LinkLayout, LinkStyle, LinkRound, FontFamily, HeaderLayout, LinkAnimation, BackgroundTexture, DecoratorType } from "@/lib/profile-types";
 
 type SetWithHistory = (updater: (prev: ProfileData) => ProfileData, immediate?: boolean) => void;
 
@@ -21,6 +21,10 @@ export function useThemeActions(setWithHistory: SetWithHistory) {
 
   const setLinkStyle = useCallback((style: LinkStyle) => {
     setWithHistory((prev) => ({ ...prev, linkStyle: style }), true);
+  }, [setWithHistory]);
+
+  const setLinkRound = useCallback((round: LinkRound) => {
+    setWithHistory((prev) => ({ ...prev, linkRound: round }), true);
   }, [setWithHistory]);
 
   const setFontFamily = useCallback((font: FontFamily) => {
@@ -47,16 +51,55 @@ export function useThemeActions(setWithHistory: SetWithHistory) {
     setWithHistory((prev) => ({ ...prev, customPrimaryColor: primary, customSecondaryColor: secondary }), true);
   }, [setWithHistory]);
 
+  const setBackgroundTexture = useCallback((texture: BackgroundTexture | null) => {
+    setWithHistory((prev) => ({ ...prev, backgroundTexture: texture }), true);
+  }, [setWithHistory]);
+
+  const setDecorator1 = useCallback((type: DecoratorType | null, text?: string | null) => {
+    setWithHistory((prev) => ({
+      ...prev,
+      decorator1Type: type,
+      decorator1Text: type === "text" ? (text ?? prev.decorator1Text) : null,
+    }), true);
+  }, [setWithHistory]);
+
+  const setDecorator1Text = useCallback((text: string) => {
+    setWithHistory((prev) => ({ ...prev, decorator1Text: text }));
+  }, [setWithHistory]);
+
+  const setDecorator2 = useCallback((type: DecoratorType | null, text?: string | null) => {
+    setWithHistory((prev) => ({
+      ...prev,
+      decorator2Type: type,
+      decorator2Text: type === "text" ? (text ?? prev.decorator2Text) : null,
+    }), true);
+  }, [setWithHistory]);
+
+  const setDecorator2Text = useCallback((text: string) => {
+    setWithHistory((prev) => ({ ...prev, decorator2Text: text }));
+  }, [setWithHistory]);
+
+  const setLinkGradient = useCallback((from: string | null, to: string | null) => {
+    setWithHistory((prev) => ({ ...prev, linkGradientFrom: from, linkGradientTo: to }), true);
+  }, [setWithHistory]);
+
   return {
     setColorTheme,
     setDarkMode,
     setLinkLayout,
     setLinkStyle,
+    setLinkRound,
     setFontFamily,
     setHeaderLayout,
     setLinkAnimation,
     setBackgroundColor,
     setFontColor,
     setCustomColors,
+    setBackgroundTexture,
+    setDecorator1,
+    setDecorator1Text,
+    setDecorator2,
+    setDecorator2Text,
+    setLinkGradient,
   };
 }
