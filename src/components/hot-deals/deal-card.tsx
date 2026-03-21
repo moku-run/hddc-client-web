@@ -1,25 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Heart, ChatCircle, ArrowSquareOut, PaperPlaneTilt, ArrowBendDownRight, Flag, XCircle, Fire } from "@phosphor-icons/react";
+import { useState, useCallback } from "react";
+import { Heart, ChatCircle, ArrowSquareOut, PaperPlaneTilt, ArrowBendDownRight, Flag, XCircle, Fire, Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { HotDeal, DealComment } from "@/lib/hot-deal-types";
+import {
+  likeDeal, unlikeDeal,
+  voteExpired, unvoteExpired,
+  fetchComments, addComment, deleteComment,
+} from "@/lib/hot-deal-api";
 import { ReportPopover } from "./report-popover";
-
-const GUEST_ANIMALS = [
-  "🐨 코알라", "🐼 판다", "🦦 수달", "🐧 펭귄", "🦊 여우",
-  "🐶 강아지", "🐱 고양이", "🐰 토끼", "🐻 곰돌이", "🦁 사자",
-  "🐯 호랑이", "🐸 개구리", "🐳 고래", "🦉 부엉이", "🐿 다람쥐",
-];
-
-let sessionGuestName: string | null = null;
-function getGuestName(): string {
-  if (!sessionGuestName) {
-    sessionGuestName = GUEST_ANIMALS[Math.floor(Math.random() * GUEST_ANIMALS.length)];
-  }
-  return sessionGuestName;
-}
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -37,71 +28,148 @@ function formatPrice(n: number): string {
   return n.toLocaleString("ko-KR");
 }
 
-interface DealCardProps {
-  deal: HotDeal;
-  comments?: DealComment[];
+function getCurrentUserId(): number | null {
+  try {
+    const raw = localStorage.getItem("hddc-user");
+    if (!raw) return null;
+    return JSON.parse(raw).userId ?? null;
+  } catch { return null; }
 }
 
-export function DealCard({ deal, comments = [] }: DealCardProps) {
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(deal.likes);
+/* ─── Price display ─── */
+
+function PriceDisplay({ originalPrice, dealPrice, discountRate }: {
+  originalPrice: number | null;
+  dealPrice: number | null;
+  discountRate: number | null;
+}) {
+  const hasDiscount = originalPrice != null && dealPrice != null && originalPrice > dealPrice;
+
+  if (hasDiscount) {
+    return (
+      <span className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
+        {discountRate != null && (
+          <span className="text-sm font-bold text-red-500">{discountRate}%</span>
+        )}
+        <span className="text-base font-bold">{formatPrice(dealPrice!)}원</span>
+        <span className="text-xs text-muted-foreground line-through">{formatPrice(originalPrice!)}원</span>
+      </span>
+    );
+  }
+
+  // 할인 정보 없이 dealPrice만 있거나 originalPrice만 있는 경우
+  const price = dealPrice ?? originalPrice;
+  if (price != null) {
+    return <span className="text-base font-bold">{formatPrice(price)}원</span>;
+  }
+
+  // 가격 정보가 아예 없는 경우
+  return <span className="text-sm font-medium text-muted-foreground">가격 정보 없음</span>;
+}
+
+/* ─── Main component ─── */
+
+export function DealCard({ deal }: { deal: HotDeal }) {
+  const [liked, setLiked] = useState(deal.isLiked);
+  const [likeCount, setLikeCount] = useState(deal.likeCount);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [guestName, setGuestName] = useState("");
-  const guestDefault = useRef(getGuestName());
-  const [replyTo, setReplyTo] = useState<{ id: string; author: string } | null>(null);
-  const [localComments, setLocalComments] = useState<DealComment[]>(comments);
-  const [expired, setExpired] = useState(false);
-  const [expiredCount, setExpiredCount] = useState(0);
+  const [comments, setComments] = useState<DealComment[]>([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [expired, setExpired] = useState(deal.isVotedExpired);
+  const [expiredCount, setExpiredCount] = useState(deal.expiredVoteCount);
 
-  // TODO: replace with real auth check
   const isLoggedIn = typeof window !== "undefined" && !!localStorage.getItem("hddc-auth");
-  const authorName = isLoggedIn ? "나" : (guestName.trim() || guestDefault.current);
+  const currentUserId = getCurrentUserId();
 
-  const rootComments = localComments.filter((c) => !c.parentId);
-  const repliesMap = new Map<string, DealComment[]>();
-  localComments.filter((c) => c.parentId).forEach((c) => {
+  const rootComments = comments.filter((c) => !c.parentId);
+  const repliesMap = new Map<number, DealComment[]>();
+  comments.filter((c) => c.parentId).forEach((c) => {
     const arr = repliesMap.get(c.parentId!) || [];
     arr.push(c);
     repliesMap.set(c.parentId!, arr);
   });
 
-  function toggleLike() {
+  const [replyTo, setReplyTo] = useState<{ id: number; userId: number } | null>(null);
+
+  /* ─── Load comments from server ─── */
+  const loadComments = useCallback(async () => {
+    if (commentsLoaded) return;
+    try {
+      const data = await fetchComments(deal.id);
+      setComments(data);
+      setCommentsLoaded(true);
+    } catch {
+      toast.error("댓글을 불러올 수 없습니다");
+    }
+  }, [deal.id, commentsLoaded]);
+
+  async function toggleLike() {
+    if (!isLoggedIn) { toast.error("로그인이 필요합니다"); return; }
+    // Optimistic update
     setLiked((prev) => !prev);
     setLikeCount((prev) => prev + (liked ? -1 : 1));
-  }
-
-  function toggleExpired() {
-    setExpired((prev) => !prev);
-    setExpiredCount((prev) => prev + (expired ? -1 : 1));
-    if (!expired) {
-      toast.info("종료 투표가 반영되었습니다");
+    try {
+      if (liked) await unlikeDeal(deal.id);
+      else await likeDeal(deal.id);
+    } catch {
+      // Rollback
+      setLiked((prev) => !prev);
+      setLikeCount((prev) => prev + (liked ? 1 : -1));
+      toast.error("좋아요 처리에 실패했습니다");
     }
   }
 
-  function submitComment() {
-    const text = commentText.trim();
-    if (!text) return;
-    setLocalComments((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        parentId: replyTo?.id ?? null,
-        author: authorName,
-        text,
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-    setCommentText("");
-    setReplyTo(null);
+  async function toggleExpired() {
+    if (!isLoggedIn) { toast.error("로그인이 필요합니다"); return; }
+    setExpired((prev) => !prev);
+    setExpiredCount((prev) => prev + (expired ? -1 : 1));
+    try {
+      if (expired) await unvoteExpired(deal.id);
+      else await voteExpired(deal.id);
+      if (!expired) toast.info("종료 투표가 반영되었습니다");
+    } catch {
+      setExpired((prev) => !prev);
+      setExpiredCount((prev) => prev + (expired ? 1 : -1));
+      toast.error("투표 처리에 실패했습니다");
+    }
   }
 
-  function startReply(comment: DealComment) {
-    setReplyTo({ id: comment.id, author: comment.author });
+  async function submitComment() {
+    if (!isLoggedIn) { toast.error("로그인이 필요합니다"); return; }
+    const text = commentText.trim();
+    if (!text) return;
+    try {
+      const created = await addComment(deal.id, text, replyTo?.id);
+      setComments((prev) => [...prev, created]);
+      setCommentText("");
+      setReplyTo(null);
+    } catch {
+      toast.error("댓글 작성에 실패했습니다");
+    }
+  }
+
+  async function handleDeleteComment(commentId: number) {
+    try {
+      await deleteComment(deal.id, commentId);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch {
+      toast.error("댓글 삭제에 실패했습니다");
+    }
+  }
+
+  function handleToggleComments() {
+    const next = !commentsOpen;
+    setCommentsOpen(next);
+    setReplyTo(null);
+    if (next) loadComments();
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card transition-colors">
+    <div className={cn(
+      "rounded-xl border border-border bg-card transition-colors",
+      deal.isExpired && "opacity-60",
+    )}>
       {/* Card body — links to external deal */}
       <a
         href={deal.url}
@@ -120,10 +188,15 @@ export function DealCard({ deal, comments = [] }: DealCardProps) {
           ) : (
             <div className="flex size-full items-center justify-center bg-foreground text-sm font-bold text-background">핫딜닷쿨</div>
           )}
-          {deal.likes >= 50 && (
+          {deal.likeCount >= 50 && (
             <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
               <Fire className="size-3 shrink-0" weight="fill" />
               인기
+            </span>
+          )}
+          {deal.isExpired && (
+            <span className="absolute right-1.5 top-1.5 rounded-full bg-muted-foreground/80 px-2 py-0.5 text-[10px] font-bold text-white">
+              종료
             </span>
           )}
         </div>
@@ -139,13 +212,17 @@ export function DealCard({ deal, comments = [] }: DealCardProps) {
             )}
           </div>
 
-          {/* Price + source + time — always bottom-aligned */}
+          {/* Price + source + time */}
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="text-base font-bold">{formatPrice(deal.price)}원</span>
+            <PriceDisplay
+              originalPrice={deal.originalPrice}
+              dealPrice={deal.dealPrice}
+              discountRate={deal.discountRate}
+            />
             <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <span>{deal.source}</span>
-              <span>·</span>
-              <span suppressHydrationWarning>{timeAgo(deal.postedAt)}</span>
+              {deal.store && <span>{deal.store}</span>}
+              {deal.store && <span>·</span>}
+              <span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
             </span>
             <ArrowSquareOut className="ml-auto size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
           </div>
@@ -166,11 +243,11 @@ export function DealCard({ deal, comments = [] }: DealCardProps) {
           <span className={liked ? "font-semibold text-red-500" : ""}>{likeCount}</span>
         </button>
         <button
-          onClick={() => { setCommentsOpen((prev) => !prev); setReplyTo(null); }}
+          onClick={handleToggleComments}
           className="flex cursor-pointer items-center gap-1 transition-colors hover:text-foreground"
         >
           <ChatCircle className="size-3.5" weight={commentsOpen ? "fill" : "regular"} />
-          <span>{localComments.length}</span>
+          <span>{deal.commentCount}</span>
         </button>
         <button
           onClick={toggleExpired}
@@ -185,7 +262,7 @@ export function DealCard({ deal, comments = [] }: DealCardProps) {
             {expiredCount > 0 && ` ${expiredCount}`}
           </span>
         </button>
-        <ReportPopover targetType="deal">
+        <ReportPopover targetType="deal" dealId={deal.id}>
           <button className="ml-auto flex cursor-pointer items-center gap-1 transition-colors hover:text-red-500">
             <Flag className="size-3.5" />
             <span className="hidden sm:inline">신고</span>
@@ -200,27 +277,36 @@ export function DealCard({ deal, comments = [] }: DealCardProps) {
             <div className="flex flex-col gap-3">
               {rootComments.map((c) => {
                 const replies = repliesMap.get(c.id) || [];
+                const isMine = currentUserId === c.userId;
                 return (
                   <div key={c.id}>
                     {/* Root comment */}
                     <div className="flex items-start gap-2 text-xs">
                       <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold">
-                        {c.author.charAt(0)}
+                        {c.nickname.charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-1.5">
-                          <span className="font-semibold">{c.author}</span>
+                          <span className="font-semibold">{c.nickname}</span>
                           <span className="text-[10px] text-muted-foreground/60" suppressHydrationWarning>{timeAgo(c.createdAt)}</span>
                         </div>
-                        <p className="mt-0.5 text-muted-foreground">{c.text}</p>
+                        <p className="mt-0.5 text-muted-foreground">{c.content}</p>
                         <div className="mt-1 flex items-center gap-2">
                           <button
-                            onClick={() => startReply(c)}
+                            onClick={() => setReplyTo({ id: c.id, userId: c.userId })}
                             className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-foreground"
                           >
                             답글
                           </button>
-                          <ReportPopover targetType="comment" />
+                          {isMine && (
+                            <button
+                              onClick={() => handleDeleteComment(c.id)}
+                              className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-destructive"
+                            >
+                              <Trash className="size-3" />
+                            </button>
+                          )}
+                          <ReportPopover targetType="comment" dealId={deal.id} commentId={c.id} />
                         </div>
                       </div>
                     </div>
@@ -228,23 +314,34 @@ export function DealCard({ deal, comments = [] }: DealCardProps) {
                     {/* Replies (1-depth) */}
                     {replies.length > 0 && (
                       <div className="ml-8 mt-2 flex flex-col gap-2 border-l-2 border-border pl-3">
-                        {replies.map((r) => (
-                          <div key={r.id} className="flex items-start gap-2 text-xs">
-                            <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[9px] font-bold">
-                              {r.author.charAt(0)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-baseline gap-1.5">
-                                <span className="font-semibold">{r.author}</span>
-                                <span className="text-[10px] text-muted-foreground/60" suppressHydrationWarning>{timeAgo(r.createdAt)}</span>
+                        {replies.map((r) => {
+                          const isReplyMine = currentUserId === r.userId;
+                          return (
+                            <div key={r.id} className="flex items-start gap-2 text-xs">
+                              <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[9px] font-bold">
+                                {r.nickname.charAt(0)}
                               </div>
-                              <p className="mt-0.5 text-muted-foreground">{r.text}</p>
-                              <div className="mt-1">
-                                <ReportPopover targetType="comment" />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="font-semibold">{r.nickname}</span>
+                                  <span className="text-[10px] text-muted-foreground/60" suppressHydrationWarning>{timeAgo(r.createdAt)}</span>
+                                </div>
+                                <p className="mt-0.5 text-muted-foreground">{r.content}</p>
+                                <div className="mt-1 flex items-center gap-2">
+                                  {isReplyMine && (
+                                    <button
+                                      onClick={() => handleDeleteComment(r.id)}
+                                      className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-destructive"
+                                    >
+                                      <Trash className="size-3" />
+                                    </button>
+                                  )}
+                                  <ReportPopover targetType="comment" dealId={deal.id} commentId={r.id} />
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -256,58 +353,48 @@ export function DealCard({ deal, comments = [] }: DealCardProps) {
           )}
 
           {/* Comment input */}
-          <div className="mt-3">
-            {replyTo && (
-              <div className="mb-1.5 flex items-center gap-1 text-[10px] text-primary">
-                <ArrowBendDownRight className="size-3" />
-                <span className="font-medium">{replyTo.author}</span>
-                <span className="text-muted-foreground">에게 답글</span>
-                <button
-                  onClick={() => setReplyTo(null)}
-                  className="ml-1 cursor-pointer text-muted-foreground hover:text-foreground"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-            {/* Guest nickname row */}
-            {!isLoggedIn && (
-              <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="shrink-0 text-[10px] text-muted-foreground">닉네임</span>
+          {isLoggedIn && (
+            <div className="mt-3">
+              {replyTo && (
+                <div className="mb-1.5 flex items-center gap-1 text-[10px] text-primary">
+                  <ArrowBendDownRight className="size-3" />
+                  <span className="font-medium">답글 작성 중</span>
+                  <button
+                    onClick={() => setReplyTo(null)}
+                    className="ml-1 cursor-pointer text-muted-foreground hover:text-foreground"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  placeholder={guestDefault.current}
-                  value={guestName}
-                  onChange={(e) => setGuestName(e.target.value)}
-                  maxLength={12}
-                  className="h-7 w-28 rounded-md border border-input bg-transparent px-2 text-xs outline-none placeholder:text-muted-foreground/50 focus:border-primary focus:ring-1 focus:ring-primary/30 sm:w-32"
+                  placeholder={replyTo ? "답글을 입력하세요..." : "댓글을 입력하세요..."}
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") submitComment(); }}
+                  className={cn(
+                    "h-8 flex-1 rounded-md border border-input bg-transparent px-3 text-xs outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30",
+                    replyTo && "border-primary/40",
+                  )}
                 />
-                <span className="hidden text-[10px] text-muted-foreground/40 sm:inline">
-                  <a href="/auth/login" className="underline transition-colors hover:text-primary">로그인</a>하면 프로필이 표시됩니다
-                </span>
+                <button
+                  onClick={submitComment}
+                  disabled={!commentText.trim()}
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <PaperPlaneTilt className="size-3.5" />
+                </button>
               </div>
-            )}
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder={replyTo ? "답글을 입력하세요..." : "댓글을 입력하세요..."}
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") submitComment(); }}
-                className={cn(
-                  "h-8 flex-1 rounded-md border border-input bg-transparent px-3 text-xs outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30",
-                  replyTo && "border-primary/40",
-                )}
-              />
-              <button
-                onClick={submitComment}
-                disabled={!commentText.trim()}
-                className="flex size-8 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <PaperPlaneTilt className="size-3.5" />
-              </button>
             </div>
-          </div>
+          )}
+
+          {!isLoggedIn && (
+            <p className="mt-3 text-center text-[10px] text-muted-foreground">
+              <a href="/auth/login" className="underline transition-colors hover:text-primary">로그인</a>하면 댓글을 작성할 수 있습니다
+            </p>
+          )}
         </div>
       )}
     </div>

@@ -12,7 +12,7 @@ interface SiteHeaderProps {
 }
 
 export function SiteHeader({ nav, children, userMenu, maxWidth = "max-w-5xl" }: SiteHeaderProps) {
-  const [logoHref, setLogoHref] = useState("/");
+  const [logoHref, setLogoHref] = useState("/hot-deals");
   useEffect(() => {
     if (localStorage.getItem("hddc-auth")) setLogoHref("/dashboard");
   }, []);

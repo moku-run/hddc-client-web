@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Flag } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import { reportDeal, reportComment } from "@/lib/hot-deal-api";
 import {
   Popover,
   PopoverContent,
@@ -19,21 +20,36 @@ const REPORT_REASONS = [
 ] as const;
 
 interface ReportPopoverProps {
-  /** "deal" or "comment" — used in toast message */
   targetType: "deal" | "comment";
+  dealId: number;
+  commentId?: number;
   children?: React.ReactNode;
 }
 
-export function ReportPopover({ targetType, children }: ReportPopoverProps) {
+export function ReportPopover({ targetType, dealId, commentId, children }: ReportPopoverProps) {
   const [open, setOpen] = useState(false);
 
-  function handleReport(reason: string) {
-    // TODO: call backend API
+  async function handleReport(reason: string) {
     setOpen(false);
-    const label = targetType === "deal" ? "게시글" : "댓글";
-    toast.success("신고가 접수되었습니다", {
-      description: `${label} 신고 사유: ${reason}`,
-    });
+    const isLoggedIn = typeof window !== "undefined" && !!localStorage.getItem("hddc-auth");
+    if (!isLoggedIn) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+
+    try {
+      if (targetType === "comment" && commentId != null) {
+        await reportComment(dealId, commentId, reason);
+      } else {
+        await reportDeal(dealId, reason);
+      }
+      const label = targetType === "deal" ? "게시글" : "댓글";
+      toast.success("신고가 접수되었습니다", {
+        description: `${label} 신고 사유: ${reason}`,
+      });
+    } catch {
+      toast.error("신고 접수에 실패했습니다");
+    }
   }
 
   return (

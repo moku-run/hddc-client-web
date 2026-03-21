@@ -124,7 +124,7 @@ function SidebarContent({
         <div className={cn("flex items-center gap-2", collapsed ? "flex-col" : "justify-between")}>
           <ThemeToggle />
           <Link
-            href="/"
+            href="/hot-deals"
             className={cn(
               "flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
               collapsed && "px-2",

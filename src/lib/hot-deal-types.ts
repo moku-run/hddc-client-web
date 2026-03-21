@@ -1,29 +1,56 @@
+/* ─── Server-aligned Hot Deal types ─── */
+
 export type DealCategory =
   | "electronics" | "fashion" | "food" | "living"
   | "beauty" | "travel" | "digital" | "sports"
   | "etc";
 
+/** Matches HotDealResponse from server */
 export interface HotDeal {
-  id: string;
+  id: number;
+  userId: number;
   title: string;
-  description: string;
-  imageUrl: string;
-  price: number;
+  description: string | null;
   url: string;
-  source: string;
-  category: DealCategory;
-  postedAt: string;
-  likes: number;
-  comments: number;
-}
-
-export interface DealComment {
-  id: string;
-  parentId: string | null;
-  author: string;
-  text: string;
+  imageUrl: string | null;
+  originalPrice: number | null;
+  dealPrice: number | null;
+  discountRate: number | null;
+  category: string | null;
+  store: string | null;
+  likeCount: number;
+  commentCount: number;
+  expiredVoteCount: number;
+  isExpired: boolean;
+  isLiked: boolean;
+  isVotedExpired: boolean;
   createdAt: string;
 }
+
+/** Matches HotDealPageResponse from server */
+export interface HotDealPage {
+  content: HotDeal[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+/** Matches CommentResponse from server */
+export interface DealComment {
+  id: number;
+  dealId: number;
+  userId: number;
+  nickname: string;
+  parentId: number | null;
+  content: string;
+  createdAt: string;
+}
+
+/** Sort options the server supports */
+export type DealSortKey = "latest" | "popular" | "discount";
+
+/* ─── Feed composition (client-only) ─── */
 
 export interface FeedProfile {
   slug: string;
