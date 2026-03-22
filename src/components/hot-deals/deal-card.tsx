@@ -311,8 +311,8 @@ export function DealCard({ deal }: { deal: HotDeal }) {
                       </div>
                     </div>
 
-                    {/* Replies (1-depth) */}
-                    {replies.length > 0 && (
+                    {/* Replies (1-depth) + inline reply input */}
+                    {(replies.length > 0 || replyTo?.id === c.id) && (
                       <div className="ml-8 mt-2 flex flex-col gap-2 border-l-2 border-border pl-3">
                         {replies.map((r) => {
                           const isReplyMine = currentUserId === r.userId;
@@ -342,6 +342,33 @@ export function DealCard({ deal }: { deal: HotDeal }) {
                             </div>
                           );
                         })}
+                        {/* Inline reply input */}
+                        {isLoggedIn && replyTo?.id === c.id && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <input
+                              type="text"
+                              placeholder="답글을 입력하세요..."
+                              value={commentText}
+                              onChange={(e) => setCommentText(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) submitComment(); }}
+                              autoFocus
+                              className="h-7 flex-1 rounded-md border border-primary/40 bg-transparent px-2.5 text-xs outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
+                            />
+                            <button
+                              onClick={submitComment}
+                              disabled={!commentText.trim()}
+                              className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              <PaperPlaneTilt className="size-3" />
+                            </button>
+                            <button
+                              onClick={() => { setReplyTo(null); setCommentText(""); }}
+                              className="cursor-pointer text-[10px] text-muted-foreground hover:text-foreground"
+                            >
+                              취소
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -352,32 +379,17 @@ export function DealCard({ deal }: { deal: HotDeal }) {
             <p className="py-2 text-center text-xs text-muted-foreground/50">아직 댓글이 없습니다</p>
           )}
 
-          {/* Comment input */}
-          {isLoggedIn && (
+          {/* Root comment input (not reply) */}
+          {isLoggedIn && !replyTo && (
             <div className="mt-3">
-              {replyTo && (
-                <div className="mb-1.5 flex items-center gap-1 text-[10px] text-primary">
-                  <ArrowBendDownRight className="size-3" />
-                  <span className="font-medium">답글 작성 중</span>
-                  <button
-                    onClick={() => setReplyTo(null)}
-                    className="ml-1 cursor-pointer text-muted-foreground hover:text-foreground"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  placeholder={replyTo ? "답글을 입력하세요..." : "댓글을 입력하세요..."}
+                  placeholder="댓글을 입력하세요..."
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") submitComment(); }}
-                  className={cn(
-                    "h-8 flex-1 rounded-md border border-input bg-transparent px-3 text-xs outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30",
-                    replyTo && "border-primary/40",
-                  )}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) submitComment(); }}
+                  className="h-8 flex-1 rounded-md border border-input bg-transparent px-3 text-xs outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
                 />
                 <button
                   onClick={submitComment}

@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { notFound } from "next/navigation";
 import { use } from "react";
+import Link from "next/link";
+import { UserCircle } from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
 import { isReservedSlug } from "@/lib/reserved-slugs";
 import { profileApi, ApiError } from "@/lib/api";
 import { toProfileData } from "@/hooks/use-profile-data";
@@ -16,7 +19,8 @@ interface Props {
 }
 
 export default function ProfilePage({ params }: Props) {
-  const { username } = use(params);
+  const { username: rawUsername } = use(params);
+  const username = decodeURIComponent(rawUsername);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFoundState, setNotFoundState] = useState(false);
@@ -52,10 +56,32 @@ export default function ProfilePage({ params }: Props) {
 
   if (notFoundState || !profileData) {
     return (
-      <div className="flex min-h-svh flex-col">
-        <main className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground">존재하지 않는 프로필입니다</p>
-        </main>
+      <div className="flex min-h-svh flex-col items-center justify-center px-4 text-center">
+        <UserCircle className="size-20 text-primary/20" />
+        <h1 className="mt-2 text-xl font-bold tracking-tight">
+          존재하지 않는 프로필입니다
+        </h1>
+        <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
+          <span className="font-medium text-foreground">@{username}</span>은 아직 등록되지 않은 프로필이에요.
+          <br />
+          이 주소로 나만의 프로필을 만들어보세요!
+        </p>
+
+        <div className="mt-8 flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/">핫딜 보러가기</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/auth/signup">회원가입</Link>
+          </Button>
+        </div>
+
+        <p className="mt-6 text-xs text-muted-foreground">
+          이미 계정이 있으신가요?{" "}
+          <Link href="/auth/login" className="font-medium text-primary underline-offset-4 hover:underline">
+            로그인
+          </Link>
+        </p>
       </div>
     );
   }

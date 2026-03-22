@@ -26,7 +26,7 @@ export function SponsorBanner({ plan, className }: SponsorBannerProps) {
         <p className="text-[11px] text-muted-foreground/70">
           Powered by{" "}
           <a
-            href="/hot-deals"
+            href="/"
             className="font-semibold text-primary/70 transition-colors hover:text-primary"
           >
             핫딜닷쿨
