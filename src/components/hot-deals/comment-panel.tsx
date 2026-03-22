@@ -174,7 +174,7 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                           <span className="font-semibold">{c.nickname}</span>
                           <span className="text-[10px] text-muted-foreground/60" suppressHydrationWarning>{timeAgo(c.createdAt)}</span>
                         </div>
-                        <p className="mt-0.5 whitespace-pre-wrap text-muted-foreground">{c.content}</p>
+                        <p className="mt-0.5 whitespace-pre-wrap break-all text-muted-foreground">{c.content}</p>
                         <div className="mt-1 flex items-center gap-2">
                           <button
                             onClick={() => toggleCommentLike(c.id)}
@@ -213,7 +213,7 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                                   <span className="font-semibold">{r.nickname}</span>
                                   <span className="text-[10px] text-muted-foreground/60" suppressHydrationWarning>{timeAgo(r.createdAt)}</span>
                                 </div>
-                                <p className="mt-0.5 whitespace-pre-wrap text-muted-foreground">{r.content}</p>
+                                <p className="mt-0.5 whitespace-pre-wrap break-all text-muted-foreground">{r.content}</p>
                                 <div className="mt-1 flex items-center gap-2">
                                   <button
                                     onClick={() => toggleCommentLike(r.id)}
