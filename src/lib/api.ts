@@ -28,9 +28,28 @@ export class ApiError extends Error {
 
 const PUBLIC_PATHS = ["/api/auth/"];
 
-async function request<T = null>(
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+async function refreshToken(): Promise<string | null> {
+  try {
+    const res = await fetch("/api/auth/refresh", {
+      method: "POST",
+      credentials: "include",
+    });
+    const body: ApiResponse<{ token: string }> = await res.json();
+    if (body.success && body.payload?.token) {
+      localStorage.setItem("hddc-token", body.payload.token);
+      return body.payload.token;
+    }
+  } catch { /* refresh 실패 */ }
+  return null;
+}
+
+export async function request<T = null>(
   path: string,
   options: RequestInit = {},
+  _retry = false,
 ): Promise<ApiResponse<T>> {
   const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
   const token = !isPublic && typeof window !== "undefined"
@@ -39,6 +58,7 @@ async function request<T = null>(
 
   const res = await fetch(path, {
     ...options,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -47,6 +67,23 @@ async function request<T = null>(
   });
 
   const body: ApiResponse<T> = await res.json();
+
+  // 401 + 재시도 안 한 경우 → refresh 시도
+  if (res.status === 401 && !_retry && !isPublic) {
+    if (!isRefreshing) {
+      isRefreshing = true;
+      refreshPromise = refreshToken().finally(() => { isRefreshing = false; });
+    }
+    const newToken = await refreshPromise;
+    if (newToken) {
+      return request<T>(path, options, true);
+    }
+    // refresh도 실패 → 로그아웃
+    localStorage.removeItem("hddc-auth");
+    localStorage.removeItem("hddc-token");
+    localStorage.removeItem("hddc-user");
+    window.location.href = "/auth/login";
+  }
 
   if (!body.success) {
     throw new ApiError(body.code, body.message, res.status);

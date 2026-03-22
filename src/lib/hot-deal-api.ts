@@ -1,32 +1,5 @@
-import type { ApiResponse } from "./api";
-import { ApiError } from "./api";
+import { request } from "./api";
 import type { HotDealPage, DealComment, DealSortKey } from "./hot-deal-types";
-
-/* ─── Shared request (reuse token logic from api.ts) ─── */
-
-async function request<T = null>(
-  path: string,
-  options: RequestInit = {},
-): Promise<ApiResponse<T>> {
-  const token = typeof window !== "undefined"
-    ? localStorage.getItem("hddc-token")
-    : null;
-
-  const res = await fetch(path, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-
-  const body: ApiResponse<T> = await res.json();
-  if (!body.success) {
-    throw new ApiError(body.code, body.message, res.status);
-  }
-  return body;
-}
 
 /* ─── Query API ─── */
 

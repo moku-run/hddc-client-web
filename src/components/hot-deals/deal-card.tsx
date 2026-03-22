@@ -11,6 +11,7 @@ import {
   fetchComments, addComment, deleteComment,
 } from "@/lib/hot-deal-api";
 import { ReportPopover } from "./report-popover";
+import { AuthModal } from "@/components/auth/auth-modal";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -78,6 +79,7 @@ export function DealCard({ deal }: { deal: HotDeal }) {
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [expired, setExpired] = useState(deal.isVotedExpired);
   const [expiredCount, setExpiredCount] = useState(deal.expiredVoteCount);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const isLoggedIn = typeof window !== "undefined" && !!localStorage.getItem("hddc-auth");
   const currentUserId = getCurrentUserId();
@@ -105,7 +107,7 @@ export function DealCard({ deal }: { deal: HotDeal }) {
   }, [deal.id, commentsLoaded]);
 
   async function toggleLike() {
-    if (!isLoggedIn) { toast.error("로그인이 필요합니다"); return; }
+    if (!isLoggedIn) { setAuthModalOpen(true); return; }
     // Optimistic update
     setLiked((prev) => !prev);
     setLikeCount((prev) => prev + (liked ? -1 : 1));
@@ -121,7 +123,7 @@ export function DealCard({ deal }: { deal: HotDeal }) {
   }
 
   async function toggleExpired() {
-    if (!isLoggedIn) { toast.error("로그인이 필요합니다"); return; }
+    if (!isLoggedIn) { setAuthModalOpen(true); return; }
     setExpired((prev) => !prev);
     setExpiredCount((prev) => prev + (expired ? -1 : 1));
     try {
@@ -136,7 +138,7 @@ export function DealCard({ deal }: { deal: HotDeal }) {
   }
 
   async function submitComment() {
-    if (!isLoggedIn) { toast.error("로그인이 필요합니다"); return; }
+    if (!isLoggedIn) { setAuthModalOpen(true); return; }
     const text = commentText.trim();
     if (!text) return;
     try {
@@ -405,11 +407,13 @@ export function DealCard({ deal }: { deal: HotDeal }) {
 
           {!isLoggedIn && (
             <p className="mt-3 text-center text-[10px] text-muted-foreground">
-              <a href="/auth/login" className="underline transition-colors hover:text-primary">로그인</a>하면 댓글을 작성할 수 있습니다
+              <button onClick={() => setAuthModalOpen(true)} className="underline transition-colors hover:text-primary">로그인</button>하면 댓글을 작성할 수 있습니다
             </p>
           )}
         </div>
       )}
+
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </div>
   );
 }
