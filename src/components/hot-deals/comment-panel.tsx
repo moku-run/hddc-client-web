@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { X, PaperPlaneTilt, Trash, ArrowBendDownRight, ArrowSquareOut, Heart } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { getAvatarColor } from "@/lib/avatar-color";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import type { HotDeal, DealComment } from "@/lib/hot-deal-types";
 import { fetchComments, addComment, deleteComment, likeComment, unlikeComment } from "@/lib/hot-deal-api";
 import { ReportPopover } from "./report-popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AuthModal } from "@/components/auth/auth-modal";
 
 function timeAgo(dateStr: string): string {
@@ -39,16 +40,33 @@ interface CommentPanelProps {
 export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
   const [comments, setComments] = useState<DealComment[]>([]);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [hasNext, setHasNext] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: number; nickname: string } | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const replyInputRef = useRef<HTMLDivElement>(null);
+
+  // 대댓글 입력창이 스크롤로 안 보이면 자동 닫힘
+  useEffect(() => {
+    if (!replyTo || !replyInputRef.current) return;
+    const el = replyInputRef.current;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (!entry.isIntersecting) setReplyTo(null); },
+      { threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [replyTo]);
 
   const isLoggedIn = typeof window !== "undefined" && !!localStorage.getItem("hddc-auth");
   const currentUserId = getCurrentUserId();
 
-  const rootComments = comments.filter((c) => !c.parentId);
+  const safeComments = comments ?? [];
+  const rootComments = safeComments.filter((c) => !c.parentId);
   const repliesMap = new Map<number, DealComment[]>();
-  comments.filter((c) => c.parentId).forEach((c) => {
+  safeComments.filter((c) => c.parentId).forEach((c) => {
     const arr = repliesMap.get(c.parentId!) || [];
     arr.push(c);
     repliesMap.set(c.parentId!, arr);
@@ -63,13 +81,30 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
   const loadComments = useCallback(async () => {
     if (commentsLoaded) return;
     try {
-      const data = await fetchComments(deal.id);
-      setComments(data);
+      const page = await fetchComments(deal.id);
+      setComments(page.comments);
+      setNextCursor(page.nextCursor);
+      setHasNext(page.hasNext);
       setCommentsLoaded(true);
     } catch {
       toast.error("댓글을 불러올 수 없습니다");
     }
   }, [deal.id, commentsLoaded]);
+
+  async function loadMore() {
+    if (!hasNext || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await fetchComments(deal.id, 20, nextCursor);
+      setComments((prev) => [...prev, ...page.comments]);
+      setNextCursor(page.nextCursor);
+      setHasNext(page.hasNext);
+    } catch {
+      toast.error("댓글을 불러올 수 없습니다");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     if (open) loadComments();
@@ -110,9 +145,15 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
   }
 
   async function handleDeleteComment(commentId: number) {
+    const hasReplies = comments.some((c) => c.parentId === commentId);
     try {
       await deleteComment(deal.id, commentId);
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      if (hasReplies) {
+        // 대댓글이 있으면 내용만 교체 (soft delete)
+        setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, content: "", nickname: "", userId: -1 } : c));
+      } else {
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
+      }
     } catch {
       toast.error("댓글 삭제에 실패했습니다");
     }
@@ -126,7 +167,7 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
       <div className="fixed inset-0 z-40 bg-black/30 sm:hidden" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[420px] flex-col border-l border-border bg-card shadow-xl">
+      <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[420px] flex-col overflow-hidden border-l border-border bg-card shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h4 className="text-sm font-semibold">댓글 {deal.commentCount}</h4>
@@ -165,6 +206,10 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                 const isMine = currentUserId === c.userId;
                 return (
                   <div key={c.id} id={`comment-${c.id}`}>
+                    {c.userId === -1 ? (
+                      /* 삭제된 댓글 (대댓글이 있어서 자리 유지) */
+                      <p className="py-1 text-xs italic text-muted-foreground/40">삭제된 메시지입니다</p>
+                    ) : (
                     <div className="flex items-start gap-2 text-xs">
                       <div className="flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white" style={{ backgroundColor: getAvatarColor(c.nickname) }}>
                         {c.nickname.charAt(0)}
@@ -190,14 +235,23 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                             답글
                           </button>
                           {isMine && (
-                            <button onClick={() => handleDeleteComment(c.id)} className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-destructive">
-                              <Trash className="size-3" />
-                            </button>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-destructive">
+                                  <Trash className="size-3" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent side="bottom" align="center" className="!w-auto flex-row items-center gap-1.5 whitespace-nowrap p-1.5">
+                                <button onClick={() => handleDeleteComment(c.id)} className="cursor-pointer rounded bg-destructive px-2.5 py-0.5 text-[9px] font-medium text-white hover:bg-destructive/80">삭제</button>
+                                <button className="cursor-pointer rounded bg-muted px-2.5 py-0.5 text-[9px] font-medium text-muted-foreground hover:text-foreground">취소</button>
+                              </PopoverContent>
+                            </Popover>
                           )}
                           <ReportPopover targetType="comment" dealId={deal.id} commentId={c.id} />
                         </div>
                       </div>
                     </div>
+                    )}
 
                     {(replies.length > 0 || replyTo?.id === c.id) && (
                       <div className="ml-7 mt-1.5 flex flex-col gap-1.5 border-l-2 border-border pl-2.5">
@@ -223,9 +277,17 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                                     {r.likeCount > 0 && r.likeCount}
                                   </button>
                                   {isReplyMine && (
-                                    <button onClick={() => handleDeleteComment(r.id)} className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-destructive">
-                                      <Trash className="size-3" />
-                                    </button>
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <button className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-destructive">
+                                          <Trash className="size-3" />
+                                        </button>
+                                      </PopoverTrigger>
+                                      <PopoverContent side="bottom" align="center" className="!w-auto flex-row items-center gap-1.5 whitespace-nowrap p-1.5">
+                                        <button onClick={() => handleDeleteComment(r.id)} className="cursor-pointer rounded bg-destructive px-2.5 py-0.5 text-[9px] font-medium text-white hover:bg-destructive/80">삭제</button>
+                                        <button className="cursor-pointer rounded bg-muted px-2.5 py-0.5 text-[9px] font-medium text-muted-foreground hover:text-foreground">취소</button>
+                                      </PopoverContent>
+                                    </Popover>
                                   )}
                                   <ReportPopover targetType="comment" dealId={deal.id} commentId={r.id} />
                                 </div>
@@ -234,13 +296,13 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                           );
                         })}
                         {isLoggedIn && replyTo?.id === c.id && (
-                          <div className="flex items-end gap-2 pt-1">
+                          <div ref={replyInputRef} className="flex items-end gap-2 pt-1">
                             <textarea
                               placeholder="답글을 입력하세요..." value={commentText} maxLength={1000}
                               onChange={(e) => setCommentText(e.target.value)}
                               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submitComment(); } }}
                               autoFocus rows={4}
-                              className="max-h-32 flex-1 resize-none rounded-md border border-primary/40 bg-transparent px-2.5 py-2 text-xs outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
+                              className="max-h-32 flex-1 resize-none rounded-md border border-primary/40 bg-transparent px-2.5 py-2 text-xs outline-none scrollbar-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
                             />
                             <button onClick={submitComment} disabled={!commentText.trim()} className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/80 disabled:opacity-40">
                               <PaperPlaneTilt className="size-3" />
@@ -253,6 +315,17 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                   </div>
                 );
               })}
+
+              {/* 더보기 버튼 */}
+              {hasNext && (
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="w-full rounded-md bg-muted py-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                >
+                  {loadingMore ? "불러오는 중..." : "이전 댓글 더보기"}
+                </button>
+              )}
             </div>
           ) : (
             <p className="py-8 text-center text-xs text-muted-foreground/50">아직 댓글이 없습니다</p>
@@ -261,7 +334,7 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
 
         {/* Bottom input — root comment only (replies use inline input) */}
         {!replyTo && (
-          <div className="border-t border-border px-4 py-3">
+          <div className="animate-in slide-in-from-bottom-full duration-300 ease-out border-t border-border px-4 py-3">
             {isLoggedIn ? (
               <div className="flex items-end gap-2">
                 <textarea
@@ -269,7 +342,7 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                   onChange={(e) => setCommentText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submitComment(); } }}
                   rows={4}
-                  className="max-h-32 flex-1 resize-none rounded-md border border-input bg-transparent px-3 py-2 text-xs outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
+                  className="max-h-32 flex-1 resize-none rounded-md border border-input bg-transparent px-3 py-2 text-xs outline-none scrollbar-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
                 />
                 <button onClick={submitComment} disabled={!commentText.trim()} className="flex size-8 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/80 disabled:opacity-40">
                   <PaperPlaneTilt className="size-3.5" />

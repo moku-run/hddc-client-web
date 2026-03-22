@@ -52,6 +52,13 @@ export interface DealComment {
   createdAt: string;
 }
 
+/** Cursor-based comment page from server */
+export interface CommentPage {
+  comments: DealComment[];
+  nextCursor: number | null;
+  hasNext: boolean;
+}
+
 /** Sort options the server supports */
 export type DealSortKey = "latest" | "popular" | "discount";
 

@@ -1,5 +1,5 @@
 import { request } from "./api";
-import type { HotDealPage, DealComment, DealSortKey } from "./hot-deal-types";
+import type { HotDealPage, DealComment, DealSortKey, CommentPage } from "./hot-deal-types";
 
 /* ─── Query API ─── */
 
@@ -23,9 +23,20 @@ export async function searchDeals(
   return res.payload!;
 }
 
-export async function fetchComments(dealId: number): Promise<DealComment[]> {
-  const res = await request<DealComment[]>(`/api/hot-deals/${dealId}/comments`);
-  return res.payload ?? [];
+export async function fetchComments(
+  dealId: number,
+  size = 20,
+  after?: number | null,
+): Promise<CommentPage> {
+  const params = new URLSearchParams({ size: String(size) });
+  if (after != null) params.set("after", String(after));
+  const res = await request<CommentPage>(`/api/hot-deals/${dealId}/comments?${params}`);
+  const payload = res.payload!;
+  // 서버가 아직 배열로 반환하는 경우 호환
+  if (Array.isArray(payload)) {
+    return { comments: payload as unknown as DealComment[], nextCursor: null, hasNext: false };
+  }
+  return payload;
 }
 
 /* ─── Like API ─── */
