@@ -79,26 +79,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }: L
 
       {/* Password */}
       <div className="relative flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="login-password">비밀번호</Label>
-          {onForgotPasswordClick ? (
-            <button
-              type="button"
-              onClick={onForgotPasswordClick}
-              className="text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
-            >
-              비밀번호 찾기
-            </button>
-          ) : (
-            <a
-              href="/auth/forgot-password"
-              tabIndex={-1}
-              className="text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
-            >
-              비밀번호 찾기
-            </a>
-          )}
-        </div>
+        <Label htmlFor="login-password">비밀번호</Label>
         <Input
           id="login-password"
           type="password"
@@ -112,14 +93,38 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }: L
         )}
       </div>
 
-      {/* Submit */}
-      <Button type="submit" className="h-11 text-sm font-semibold" disabled={submitting}>
-        {submitting ? (
-          <><SpinnerGap className="size-4 animate-spin" />로그인 중...</>
+      {/* Submit + Forgot password */}
+      <div className="flex flex-col gap-3">
+        <Button type="submit" className="h-11 text-sm font-semibold" disabled={submitting}>
+          {submitting ? (
+            <><SpinnerGap className="size-4 animate-spin" />로그인 중...</>
+          ) : (
+            "로그인"
+          )}
+        </Button>
+        {onForgotPasswordClick ? (
+          <button
+            type="button"
+            onClick={onForgotPasswordClick}
+            className="text-center text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
+          >
+            비밀번호를 잊으셨나요?
+          </button>
         ) : (
-          "로그인"
+          <a
+            href="/auth/forgot-password"
+            className="text-center text-xs text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
+          >
+            비밀번호를 잊으셨나요?
+          </a>
         )}
-      </Button>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-[11px] text-muted-foreground">또는</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
 
       {/* Signup Link */}
       <p className="text-center text-sm text-muted-foreground">
