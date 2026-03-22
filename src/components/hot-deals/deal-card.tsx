@@ -1,16 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Heart, ChatCircle, ArrowSquareOut, PaperPlaneTilt, ArrowBendDownRight, Flag, XCircle, Fire, Trash } from "@phosphor-icons/react";
+import { useState } from "react";
+import { Heart, ChatCircle, Flag, XCircle, Fire, CursorClick } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { HotDeal, DealComment } from "@/lib/hot-deal-types";
-import {
-  likeDeal, unlikeDeal,
-  voteExpired, unvoteExpired,
-  fetchComments, addComment, deleteComment,
-} from "@/lib/hot-deal-api";
+import type { HotDeal } from "@/lib/hot-deal-types";
+import { likeDeal, unlikeDeal, voteExpired, unvoteExpired } from "@/lib/hot-deal-api";
 import { ReportPopover } from "./report-popover";
+import { CommentPanel } from "./comment-panel";
 import { AuthModal } from "@/components/auth/auth-modal";
 
 function timeAgo(dateStr: string): string {
@@ -29,12 +26,10 @@ function formatPrice(n: number): string {
   return n.toLocaleString("ko-KR");
 }
 
-function getCurrentUserId(): number | null {
-  try {
-    const raw = localStorage.getItem("hddc-user");
-    if (!raw) return null;
-    return JSON.parse(raw).userId ?? null;
-  } catch { return null; }
+function formatCount(n: number): string {
+  if (n >= 10000) return `${(n / 10000).toFixed(1)}만`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return String(n);
 }
 
 /* ─── Price display ─── */
@@ -58,64 +53,45 @@ function PriceDisplay({ originalPrice, dealPrice, discountRate }: {
     );
   }
 
-  // 할인 정보 없이 dealPrice만 있거나 originalPrice만 있는 경우
   const price = dealPrice ?? originalPrice;
   if (price != null) {
     return <span className="text-base font-bold">{formatPrice(price)}원</span>;
   }
 
-  // 가격 정보가 아예 없는 경우
   return <span className="text-sm font-medium text-muted-foreground">가격 정보 없음</span>;
 }
 
 /* ─── Main component ─── */
 
-export function DealCard({ deal }: { deal: HotDeal }) {
+interface DealCardProps {
+  deal: HotDeal;
+  index?: number;
+  commentsOpen?: boolean;
+  onToggleComments?: () => void;
+}
+
+export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggleComments }: DealCardProps) {
   const [liked, setLiked] = useState(deal.isLiked);
   const [likeCount, setLikeCount] = useState(deal.likeCount);
-  const [commentsOpen, setCommentsOpen] = useState(false);
-  const [commentText, setCommentText] = useState("");
-  const [comments, setComments] = useState<DealComment[]>([]);
-  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [commentsOpenLocal, setCommentsOpenLocal] = useState(false);
+
+  // 외부 제어가 있으면 외부 상태 사용, 없으면 로컬
+  const commentsOpen = onToggleComments ? (commentsOpenProp ?? false) : commentsOpenLocal;
+  const toggleComments = onToggleComments ?? (() => setCommentsOpenLocal((prev) => !prev));
   const [expired, setExpired] = useState(deal.isVotedExpired);
   const [expiredCount, setExpiredCount] = useState(deal.expiredVoteCount);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const isLoggedIn = typeof window !== "undefined" && !!localStorage.getItem("hddc-auth");
-  const currentUserId = getCurrentUserId();
-
-  const rootComments = comments.filter((c) => !c.parentId);
-  const repliesMap = new Map<number, DealComment[]>();
-  comments.filter((c) => c.parentId).forEach((c) => {
-    const arr = repliesMap.get(c.parentId!) || [];
-    arr.push(c);
-    repliesMap.set(c.parentId!, arr);
-  });
-
-  const [replyTo, setReplyTo] = useState<{ id: number; userId: number } | null>(null);
-
-  /* ─── Load comments from server ─── */
-  const loadComments = useCallback(async () => {
-    if (commentsLoaded) return;
-    try {
-      const data = await fetchComments(deal.id);
-      setComments(data);
-      setCommentsLoaded(true);
-    } catch {
-      toast.error("댓글을 불러올 수 없습니다");
-    }
-  }, [deal.id, commentsLoaded]);
 
   async function toggleLike() {
     if (!isLoggedIn) { setAuthModalOpen(true); return; }
-    // Optimistic update
     setLiked((prev) => !prev);
     setLikeCount((prev) => prev + (liked ? -1 : 1));
     try {
       if (liked) await unlikeDeal(deal.id);
       else await likeDeal(deal.id);
     } catch {
-      // Rollback
       setLiked((prev) => !prev);
       setLikeCount((prev) => prev + (liked ? 1 : -1));
       toast.error("좋아요 처리에 실패했습니다");
@@ -137,50 +113,30 @@ export function DealCard({ deal }: { deal: HotDeal }) {
     }
   }
 
-  async function submitComment() {
-    if (!isLoggedIn) { setAuthModalOpen(true); return; }
-    const text = commentText.trim();
-    if (!text) return;
-    try {
-      const created = await addComment(deal.id, text, replyTo?.id);
-      setComments((prev) => [...prev, created]);
-      setCommentText("");
-      setReplyTo(null);
-    } catch {
-      toast.error("댓글 작성에 실패했습니다");
-    }
-  }
-
-  async function handleDeleteComment(commentId: number) {
-    try {
-      await deleteComment(deal.id, commentId);
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-    } catch {
-      toast.error("댓글 삭제에 실패했습니다");
-    }
-  }
-
-  function handleToggleComments() {
-    const next = !commentsOpen;
-    setCommentsOpen(next);
-    setReplyTo(null);
-    if (next) loadComments();
-  }
-
   return (
-    <div className={cn(
-      "rounded-xl border border-border bg-card transition-colors",
-      deal.isExpired && "opacity-60",
-    )}>
-      {/* Card body — links to external deal */}
+    <div
+      id={`deal-${deal.id}`}
+      className={cn(
+        "flex rounded-xl border border-border bg-card transition-colors",
+        deal.isExpired && "opacity-60",
+      )}
+    >
+      {/* Left: Index strip */}
+      {index != null && (
+        <div className="flex w-8 shrink-0 items-center justify-center rounded-l-xl bg-muted/50 text-sm font-bold text-muted-foreground">
+          {index}
+        </div>
+      )}
+
+      {/* Center: Card body */}
       <a
-        href={deal.url}
+        href={`/r/deals/${deal.id}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="group flex gap-3 p-3 sm:gap-4 sm:p-4"
+        className="group flex flex-1 gap-3 p-2.5 sm:p-3"
       >
         {/* Thumbnail */}
-        <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:size-28">
+        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:h-24 sm:w-28">
           {deal.imageUrl ? (
             <>
               <div className="flex size-full items-center justify-center bg-foreground text-sm font-bold text-background">핫딜닷쿨</div>
@@ -209,210 +165,58 @@ export function DealCard({ deal }: { deal: HotDeal }) {
 
         {/* Content */}
         <div className="flex min-w-0 flex-1 flex-col justify-between">
-          <div>
-            <h3 className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-primary">
-              {deal.title}
-            </h3>
-            {deal.description && (
-              <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{deal.description}</p>
-            )}
-          </div>
+          <h3 className="line-clamp-2 min-h-[2.75rem] text-base font-semibold leading-snug group-hover:text-primary">
+            {deal.title}
+          </h3>
 
-          {/* Price left + meta right */}
-          <div className="mt-1.5 flex items-end justify-between">
+          <div className="mt-1 flex flex-col gap-1">
             <PriceDisplay
               originalPrice={deal.originalPrice}
               dealPrice={deal.dealPrice}
               discountRate={deal.discountRate}
             />
-            <span className="shrink-0 text-[10px] text-muted-foreground">
-              {deal.nickname} · {deal.store && <>{deal.store} · </>}<span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
-            </span>
+
+            {/* Meta left + pills right */}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-muted-foreground">
+                {deal.viewCount != null && deal.viewCount > 0 && (
+                  <><CursorClick className="inline size-2.5" />{formatCount(deal.viewCount)} · </>
+                )}
+                <Heart className="inline size-2.5" />{likeCount} · {deal.nickname} · {deal.store && <>{deal.store} · </>}<span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={(e) => { e.preventDefault(); toggleLike(); }}
+                  className={cn("flex size-6 cursor-pointer items-center justify-center rounded-full transition-colors", liked ? "bg-red-50 text-red-500" : "bg-muted text-muted-foreground hover:text-red-500")}
+                >
+                  <Heart className="size-3.5" weight={liked ? "fill" : "regular"} />
+                </button>
+                <button
+                  onClick={(e) => { e.preventDefault(); toggleExpired(); }}
+                  className={cn("flex size-6 cursor-pointer items-center justify-center rounded-full transition-colors", expired ? "bg-orange-50 text-orange-500" : "bg-muted text-muted-foreground hover:text-orange-500")}
+                >
+                  <XCircle className="size-3.5" weight={expired ? "fill" : "regular"} />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </a>
 
-      {/* Action bar */}
-      <div className="flex items-center gap-2 border-t border-border px-3 py-2 text-[11px] text-muted-foreground sm:gap-4 sm:px-4">
-        <button
-          onClick={toggleLike}
-          className="flex cursor-pointer items-center gap-1 transition-colors hover:text-red-500"
-        >
-          <Heart
-            className="size-3.5"
-            weight={liked ? "fill" : "regular"}
-            color={liked ? "var(--color-red-500, #ef4444)" : undefined}
-          />
-          <span className={liked ? "font-semibold text-red-500" : ""}>{likeCount}</span>
-        </button>
-        <button
-          onClick={handleToggleComments}
-          className="flex cursor-pointer items-center gap-1 transition-colors hover:text-foreground"
-        >
-          <ChatCircle className="size-3.5" weight={commentsOpen ? "fill" : "regular"} />
-          <span>{deal.commentCount}</span>
-        </button>
-        <button
-          onClick={toggleExpired}
-          className={cn(
-            "flex cursor-pointer items-center gap-1 transition-colors hover:text-orange-500",
-            expired && "text-orange-500",
-          )}
-        >
-          <XCircle className="size-3.5" weight={expired ? "fill" : "regular"} />
-          <span className={expired ? "font-semibold" : ""}>
-            끝났어요
-            {expiredCount > 0 && ` ${expiredCount}`}
-          </span>
-        </button>
-        <ReportPopover targetType="deal" dealId={deal.id}>
-          <button className="ml-auto flex cursor-pointer items-center gap-1 transition-colors hover:text-red-500">
-            <Flag className="size-3.5" />
-            <span className="hidden sm:inline">신고</span>
-          </button>
-        </ReportPopover>
-      </div>
+      {/* Right: Comment strip */}
+      <button
+        onClick={toggleComments}
+        className={cn(
+          "flex w-10 shrink-0 flex-col items-center justify-center gap-1 border-l border-border transition-colors",
+          index != null ? "" : "rounded-r-xl",
+          commentsOpen ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+        )}
+      >
+        <ChatCircle className="size-4" weight={commentsOpen ? "fill" : "regular"} />
+        <span className="text-[9px] font-medium">{deal.commentCount}</span>
+      </button>
 
-      {/* Comments accordion */}
-      {commentsOpen && (
-        <div className="border-t border-border px-3 py-3 sm:px-4">
-          {rootComments.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {rootComments.map((c) => {
-                const replies = repliesMap.get(c.id) || [];
-                const isMine = currentUserId === c.userId;
-                return (
-                  <div key={c.id}>
-                    {/* Root comment */}
-                    <div className="flex items-start gap-2 text-xs">
-                      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold">
-                        {c.nickname.charAt(0)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="font-semibold">{c.nickname}</span>
-                          <span className="text-[10px] text-muted-foreground/60" suppressHydrationWarning>{timeAgo(c.createdAt)}</span>
-                        </div>
-                        <p className="mt-0.5 text-muted-foreground">{c.content}</p>
-                        <div className="mt-1 flex items-center gap-2">
-                          <button
-                            onClick={() => setReplyTo({ id: c.id, userId: c.userId })}
-                            className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-foreground"
-                          >
-                            답글
-                          </button>
-                          {isMine && (
-                            <button
-                              onClick={() => handleDeleteComment(c.id)}
-                              className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-destructive"
-                            >
-                              <Trash className="size-3" />
-                            </button>
-                          )}
-                          <ReportPopover targetType="comment" dealId={deal.id} commentId={c.id} />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Replies (1-depth) + inline reply input */}
-                    {(replies.length > 0 || replyTo?.id === c.id) && (
-                      <div className="ml-8 mt-2 flex flex-col gap-2 border-l-2 border-border pl-3">
-                        {replies.map((r) => {
-                          const isReplyMine = currentUserId === r.userId;
-                          return (
-                            <div key={r.id} className="flex items-start gap-2 text-xs">
-                              <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[9px] font-bold">
-                                {r.nickname.charAt(0)}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-baseline gap-1.5">
-                                  <span className="font-semibold">{r.nickname}</span>
-                                  <span className="text-[10px] text-muted-foreground/60" suppressHydrationWarning>{timeAgo(r.createdAt)}</span>
-                                </div>
-                                <p className="mt-0.5 text-muted-foreground">{r.content}</p>
-                                <div className="mt-1 flex items-center gap-2">
-                                  {isReplyMine && (
-                                    <button
-                                      onClick={() => handleDeleteComment(r.id)}
-                                      className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-destructive"
-                                    >
-                                      <Trash className="size-3" />
-                                    </button>
-                                  )}
-                                  <ReportPopover targetType="comment" dealId={deal.id} commentId={r.id} />
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {/* Inline reply input */}
-                        {isLoggedIn && replyTo?.id === c.id && (
-                          <div className="flex items-center gap-2 pt-1">
-                            <input
-                              type="text"
-                              placeholder="답글을 입력하세요..."
-                              value={commentText}
-                              onChange={(e) => setCommentText(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) submitComment(); }}
-                              autoFocus
-                              className="h-7 flex-1 rounded-md border border-primary/40 bg-transparent px-2.5 text-xs outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
-                            />
-                            <button
-                              onClick={submitComment}
-                              disabled={!commentText.trim()}
-                              className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              <PaperPlaneTilt className="size-3" />
-                            </button>
-                            <button
-                              onClick={() => { setReplyTo(null); setCommentText(""); }}
-                              className="cursor-pointer text-[10px] text-muted-foreground hover:text-foreground"
-                            >
-                              취소
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="py-2 text-center text-xs text-muted-foreground/50">아직 댓글이 없습니다</p>
-          )}
-
-          {/* Root comment input (not reply) */}
-          {isLoggedIn && !replyTo && (
-            <div className="mt-3">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="댓글을 입력하세요..."
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) submitComment(); }}
-                  className="h-8 flex-1 rounded-md border border-input bg-transparent px-3 text-xs outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
-                />
-                <button
-                  onClick={submitComment}
-                  disabled={!commentText.trim()}
-                  className="flex size-8 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <PaperPlaneTilt className="size-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {!isLoggedIn && (
-            <p className="mt-3 text-center text-[10px] text-muted-foreground">
-              <button onClick={() => setAuthModalOpen(true)} className="underline transition-colors hover:text-primary">로그인</button>하면 댓글을 작성할 수 있습니다
-            </p>
-          )}
-        </div>
-      )}
-
+      <CommentPanel deal={deal} open={commentsOpen} onClose={toggleComments} />
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </div>
   );

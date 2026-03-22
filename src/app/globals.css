@@ -194,3 +194,12 @@ summary,
     linear-gradient(180deg, rgba(102, 102, 102, 0) 50%, rgba(102, 102, 102, 0.5) 100%),
     rgba(29, 29, 29, 0.7);
 }
+
+/* ─── Hidden scrollbar ─── */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

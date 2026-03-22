@@ -18,7 +18,7 @@ export function Fab() {
   if (!mounted) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-[60] sm:bottom-6 sm:right-6">
+    <div className="fixed bottom-4 right-4 z-[60] transition-[right] duration-200 sm:bottom-6 sm:right-6 [[data-comment-panel]_&]:right-[calc(420px+1rem)] [[data-comment-panel]_&]:sm:right-[calc(420px+1.5rem)]">
       <Popover>
         <PopoverTrigger asChild>
           <button

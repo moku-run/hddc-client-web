@@ -7,6 +7,7 @@ export type DealCategory =
 
 /** Matches HotDealResponse from server */
 export interface HotDeal {
+  dealNumber: number;
   id: number;
   userId: number;
   nickname: string;
@@ -23,6 +24,7 @@ export interface HotDeal {
   commentCount: number;
   expiredVoteCount: number;
   isExpired: boolean;
+  viewCount?: number;
   isLiked: boolean;
   isVotedExpired: boolean;
   createdAt: string;
@@ -45,6 +47,8 @@ export interface DealComment {
   nickname: string;
   parentId: number | null;
   content: string;
+  likeCount: number;
+  isLiked: boolean;
   createdAt: string;
 }
 

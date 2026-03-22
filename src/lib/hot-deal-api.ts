@@ -56,6 +56,16 @@ export async function deleteComment(dealId: number, commentId: number): Promise<
   await request(`/api/hot-deals/${dealId}/comments/${commentId}`, { method: "DELETE" });
 }
 
+/* ─── Comment Like API ─── */
+
+export async function likeComment(dealId: number, commentId: number): Promise<void> {
+  await request(`/api/hot-deals/${dealId}/comments/${commentId}/likes`, { method: "POST" });
+}
+
+export async function unlikeComment(dealId: number, commentId: number): Promise<void> {
+  await request(`/api/hot-deals/${dealId}/comments/${commentId}/likes`, { method: "DELETE" });
+}
+
 /* ─── Expired Vote API ─── */
 
 export async function voteExpired(dealId: number): Promise<void> {

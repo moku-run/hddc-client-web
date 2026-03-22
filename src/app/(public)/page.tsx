@@ -110,6 +110,7 @@ export default function HotDealsPage() {
 
   const displayItems = isMobile ? allDeals : deals;
   const feed = useMemo(() => buildFeed(displayItems, MOCK_PROFILES), [displayItems]);
+  const [activeCommentDealId, setActiveCommentDealId] = useState<number | null>(null);
 
   function goTo(p: number) {
     setPage(p);
@@ -121,42 +122,37 @@ export default function HotDealsPage() {
       <div className="flex-1">
         {/* Sticky control bar */}
         <div className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex shrink-0 items-center gap-2">
-                <Fire className="size-5 text-red-500" weight="fill" />
-                <h1 className="text-base font-bold tracking-tight sm:text-lg">핫딜</h1>
-              </div>
-              <ToggleGroup
-                variant="pill"
-                size="sm"
-                value={sortKey}
-                onValueChange={handleSortChange}
-                options={[
-                  { value: "latest" as const, label: "최신순" },
-                  { value: "popular" as const, label: "인기순" },
-                ]}
-              />
-            </div>
-            <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="relative">
-              <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="mx-auto flex w-full max-w-3xl items-center gap-2 px-3 py-1.5 sm:px-6">
+            <Fire className="size-4 shrink-0 text-red-500" weight="fill" />
+            <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="relative flex-1">
+              <MagnifyingGlass className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="상품명, 판매처로 검색..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="h-9 w-full rounded-lg border border-border bg-background pl-9 pr-9 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/30"
+                className="h-7 w-full rounded-md border border-border bg-background pl-8 pr-8 text-[11px] outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
               />
               {searchInput && (
                 <button
                   type="button"
                   onClick={clearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  <X className="size-4" />
+                  <X className="size-3" />
                 </button>
               )}
             </form>
+            <ToggleGroup
+              variant="pill"
+              size="sm"
+              value={sortKey}
+              onValueChange={handleSortChange}
+              options={[
+                { value: "latest" as const, label: "최신순" },
+                { value: "popular" as const, label: "인기순" },
+              ]}
+            />
           </div>
         </div>
 
@@ -180,7 +176,7 @@ export default function HotDealsPage() {
               {feed.map((item, i) => {
                 switch (item.type) {
                   case "deal":
-                    return <DealCard key={item.data.id} deal={item.data} />;
+                    return <DealCard key={item.data.id} deal={{ ...item.data, viewCount: item.data.viewCount ?? 330 }} index={item.data.dealNumber} commentsOpen={activeCommentDealId === item.data.id} onToggleComments={() => setActiveCommentDealId((prev) => prev === item.data.id ? null : item.data.id)} />;
                   case "sponsor":
                     return <SponsorAd key={`sponsor-${i}`} />;
                   case "profile":

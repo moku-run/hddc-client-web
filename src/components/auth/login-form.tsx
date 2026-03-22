@@ -66,6 +66,7 @@ export function LoginForm({ onSuccess, onSignupClick, onForgotPasswordClick }: L
           id="login-email"
           type="email"
           placeholder="name@example.com"
+          autoFocus
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           onBlur={() => { if (email) handleBlur("email"); else setFieldError("email", null); }}
