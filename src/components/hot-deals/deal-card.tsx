@@ -21,7 +21,7 @@ function timeAgo(dateStr: string): string {
   if (hours < 24) return `${hours}시간 전`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}일 전`;
-  return new Date(dateStr).toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
+  return new Date(dateStr).toLocaleDateString("ko-KR", { year: "numeric", month: "short", day: "numeric" });
 }
 
 function formatPrice(n: number): string {
@@ -180,15 +180,19 @@ export function DealCard({ deal }: { deal: HotDeal }) {
         {/* Thumbnail */}
         <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:size-28">
           {deal.imageUrl ? (
-            <img
-              src={deal.imageUrl}
-              alt={deal.title}
-              className="size-full object-cover"
-            />
+            <>
+              <div className="flex size-full items-center justify-center bg-foreground text-sm font-bold text-background">핫딜닷쿨</div>
+              <img
+                src={deal.imageUrl}
+                alt={deal.title}
+                className="absolute inset-0 size-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
+              />
+            </>
           ) : (
             <div className="flex size-full items-center justify-center bg-foreground text-sm font-bold text-background">핫딜닷쿨</div>
           )}
-          {deal.likeCount >= 50 && (
+          {deal.likeCount >= 30 && expiredCount < 5 && (
             <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
               <Fire className="size-3 shrink-0" weight="fill" />
               인기
@@ -212,19 +216,16 @@ export function DealCard({ deal }: { deal: HotDeal }) {
             )}
           </div>
 
-          {/* Price + source + time */}
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          {/* Price left + meta right */}
+          <div className="mt-1.5 flex items-end justify-between">
             <PriceDisplay
               originalPrice={deal.originalPrice}
               dealPrice={deal.dealPrice}
               discountRate={deal.discountRate}
             />
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              {deal.store && <span>{deal.store}</span>}
-              {deal.store && <span>·</span>}
-              <span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
+            <span className="shrink-0 text-[10px] text-muted-foreground">
+              {deal.nickname} · {deal.store && <>{deal.store} · </>}<span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
             </span>
-            <ArrowSquareOut className="ml-auto size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
           </div>
         </div>
       </a>

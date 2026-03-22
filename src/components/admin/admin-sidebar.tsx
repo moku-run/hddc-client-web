@@ -137,8 +137,10 @@ function SidebarContent({
 
         <button
           onClick={() => {
+            localStorage.removeItem("hddc-admin-token");
             localStorage.removeItem("hddc-admin-auth");
-            window.location.href = "/auth/login";
+            localStorage.removeItem("hddc-admin-user");
+            window.location.href = "/admin-login";
           }}
           className={cn(
             "mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive",

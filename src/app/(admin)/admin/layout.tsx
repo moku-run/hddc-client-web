@@ -10,20 +10,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
-    const flag = localStorage.getItem("hddc-admin-auth");
-    if (!flag) {
-      // Dev convenience: auto-set admin auth so we can access /admin
-      localStorage.setItem("hddc-admin-auth", "true");
-      setAuthed(true);
-    } else {
-      setAuthed(true);
+    const token = localStorage.getItem("hddc-admin-token");
+    if (!token) {
+      router.replace("/admin-login");
+      return;
     }
+    setAuthed(true);
   }, [router]);
 
   if (!authed) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">로딩 중...</p>
+        <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }

@@ -135,7 +135,6 @@ export default function HotDealsPage() {
                 options={[
                   { value: "latest" as const, label: "최신순" },
                   { value: "popular" as const, label: "인기순" },
-                  { value: "discount" as const, label: "할인율순" },
                 ]}
               />
             </div>

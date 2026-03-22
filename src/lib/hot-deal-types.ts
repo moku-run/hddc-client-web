@@ -9,6 +9,7 @@ export type DealCategory =
 export interface HotDeal {
   id: number;
   userId: number;
+  nickname: string;
   title: string;
   description: string | null;
   url: string;
