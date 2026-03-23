@@ -24,7 +24,7 @@ export function useLinkActions(setWithHistory: SetWithHistory) {
   }, [setWithHistory]);
 
   const updateLink = useCallback(
-    (id: number, fields: Partial<Pick<ProfileLink, "title" | "url" | "imageUrl" | "description">>) => {
+    (id: number, fields: Partial<Pick<ProfileLink, "title" | "url" | "imageUrl" | "description" | "price" | "originalPrice" | "discountRate" | "store" | "category">>) => {
       setWithHistory((prev) => ({
         ...prev,
         links: prev.links.map((l) => (l.id === id ? { ...l, ...fields } : l)),

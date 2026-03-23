@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { HexColorPicker, HexColorInput } from "react-colorful";
 import { type ColorTheme } from "@/hooks/use-color-theme";
 import { Sun, Moon, Palette } from "@phosphor-icons/react";
-import { FONT_FAMILY_LABELS, FONT_FAMILY_CSS, type FontFamily, type BackgroundTexture, type PageLayout } from "@/lib/profile-types";
-import { List, GridFour, Newspaper, Storefront, ImageSquare, SquaresFour } from "@phosphor-icons/react";
+import { FONT_FAMILY_LABELS, FONT_FAMILY_CSS, type FontFamily, type BackgroundTexture, type LinkRound, type LinkBorderThick } from "@/lib/profile-types";
 import { autoSecondary } from "@/lib/color-utils";
 import { PRESET_THEMES, THEME_COLORS, THEME_LABELS, BG_PALETTE, needsSwatchBorder } from "@/lib/theme-constants";
 import { useSectionFocus } from "@/contexts/edit-focus-context";
@@ -49,9 +48,10 @@ interface Props {
   backgroundTexture: BackgroundTexture | null;
   customPrimaryColor: string | null;
   customSecondaryColor: string | null;
-  pageLayout: PageLayout;
   fontFamily: FontFamily;
-  setPageLayout: (layout: PageLayout) => void;
+  linkRound: LinkRound;
+  linkBorderColor: string | null;
+  linkBorderThick: LinkBorderThick;
   setColorTheme: (theme: ColorTheme) => void;
   setDarkMode: (dark: boolean) => void;
   setBackgroundColor: (color: string | null) => void;
@@ -59,12 +59,31 @@ interface Props {
   setBackgroundTexture: (texture: BackgroundTexture | null) => void;
   setCustomColors: (primary: string, secondary: string) => void;
   setFontFamily: (font: FontFamily) => void;
+  setLinkRound: (round: LinkRound) => void;
+  setLinkBorderColor: (color: string | null) => void;
+  setLinkBorderThick: (thick: LinkBorderThick) => void;
 }
 
+const LINK_ROUNDS: ToggleGroupOption<LinkRound>[] = [
+  { value: "none", label: "직각" },
+  { value: "sm", label: "조금" },
+  { value: "md", label: "중간" },
+  { value: "lg", label: "많이" },
+];
+
+const BORDER_THICKS: ToggleGroupOption<LinkBorderThick>[] = [
+  { value: "none", label: "없음" },
+  { value: "thin", label: "얇게" },
+  { value: "medium", label: "보통" },
+  { value: "thick", label: "두껍게" },
+];
+
 export function ThemeEditor({
-  colorTheme, darkMode, backgroundColor, fontColor, backgroundTexture, pageLayout,
+  colorTheme, darkMode, backgroundColor, fontColor, backgroundTexture,
   customPrimaryColor, customSecondaryColor, fontFamily,
-  setPageLayout, setColorTheme, setDarkMode, setBackgroundColor, setFontColor, setBackgroundTexture, setCustomColors, setFontFamily,
+  linkRound, linkBorderColor, linkBorderThick,
+  setColorTheme, setDarkMode, setBackgroundColor, setFontColor, setBackgroundTexture, setCustomColors, setFontFamily,
+  setLinkRound, setLinkBorderColor, setLinkBorderThick,
 }: Props) {
   const sectionFocus = useSectionFocus("theme");
 
@@ -80,35 +99,6 @@ export function ThemeEditor({
   return (
     <section className="flex flex-col gap-4" {...sectionFocus}>
       <SectionHeader title="테마" />
-
-      {/* Page layout */}
-      <div>
-        <p className="mb-2 text-xs text-muted-foreground">페이지 레이아웃</p>
-        <div className="grid grid-cols-3 gap-1.5">
-          {([
-            { value: "list" as const, label: "리스트", icon: List },
-            { value: "card" as const, label: "카드", icon: Newspaper },
-            { value: "grid" as const, label: "그리드", icon: GridFour },
-            { value: "magazine" as const, label: "매거진", icon: Newspaper },
-            { value: "shop" as const, label: "쇼핑몰", icon: Storefront },
-            { value: "visual" as const, label: "비주얼", icon: ImageSquare },
-          ] as const).map(({ value, label, icon: Icon }) => (
-            <button
-              key={value}
-              onClick={() => setPageLayout(value)}
-              className={cn(
-                "flex cursor-pointer flex-col items-center gap-1 rounded-lg border px-2 py-2 text-[10px] font-medium transition-all",
-                pageLayout === value
-                  ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
-                  : "border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground",
-              )}
-            >
-              <Icon className="size-5" weight={pageLayout === value ? "fill" : "regular"} />
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Color presets */}
       <div>
@@ -357,6 +347,31 @@ export function ThemeEditor({
               </span>
             </div>
           )}
+        />
+      </div>
+
+      {/* Card border customization */}
+      <div>
+        <p className="mb-2 text-xs text-muted-foreground">상품 카드 라운드</p>
+        <ToggleGroup variant="square" value={linkRound} onValueChange={setLinkRound} options={LINK_ROUNDS} />
+      </div>
+
+      <div>
+        <p className="mb-2 text-xs text-muted-foreground">상품 카드 테두리 두께</p>
+        <ToggleGroup variant="square" value={linkBorderThick} onValueChange={setLinkBorderThick} options={BORDER_THICKS} />
+      </div>
+
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">상품 카드 테두리 색상</p>
+          {linkBorderColor && (
+            <RemoveButton label="초기화" onClick={() => setLinkBorderColor(null)} />
+          )}
+        </div>
+        <ColorPickerPopover
+          color={linkBorderColor || "#e5e7eb"}
+          onChange={(color) => setLinkBorderColor(color)}
+          triggerLabel="테두리 색상 선택"
         />
       </div>
 

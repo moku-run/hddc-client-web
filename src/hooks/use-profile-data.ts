@@ -46,6 +46,8 @@ export function toProfileData(res: ProfileResponse): ProfileData {
     decorator2Text: res.decorator2Text ?? null,
     linkGradientFrom: res.linkGradientFrom ?? null,
     linkGradientTo: res.linkGradientTo ?? null,
+    linkBorderColor: ((res as unknown as Record<string, unknown>).linkBorderColor as string) ?? null,
+    linkBorderThick: ((res as unknown as Record<string, unknown>).linkBorderThick as ProfileData["linkBorderThick"]) ?? "thin",
     darkMode: res.darkMode,
     links: res.links.map((l): ProfileLink => ({
       id: l.id,
@@ -204,6 +206,8 @@ export function useProfileData() {
         decorator2Text: profileData.decorator2Text,
         linkGradientFrom: profileData.linkGradientFrom,
         linkGradientTo: profileData.linkGradientTo,
+        linkBorderColor: profileData.linkBorderColor,
+        linkBorderThick: profileData.linkBorderThick,
         darkMode: profileData.darkMode,
         links: profileData.links.map((l) => ({
           ...(l.id > 0 ? { id: l.id } : {}),

@@ -21,6 +21,8 @@ export type LinkStyle = "none" | "fill" | "shadow" | "glass" | "gradient";
 
 export type LinkRound = "none" | "sm" | "md" | "lg";
 
+export type LinkBorderThick = "none" | "thin" | "medium" | "thick";
+
 export type HeaderLayout = "center" | "left" | "avatar-only" | "banner-only";
 
 export type LinkAnimation = "none" | "fade-in" | "slide-up" | "scale" | "stagger";
@@ -101,6 +103,8 @@ export interface ProfileData {
   decorator2Text: string | null;
   linkGradientFrom: string | null;
   linkGradientTo: string | null;
+  linkBorderColor: string | null;
+  linkBorderThick: LinkBorderThick;
   darkMode: boolean;
   plan: PlanType;
 }
@@ -132,6 +136,8 @@ export const DEFAULT_PROFILE: ProfileData = {
   decorator2Text: null,
   linkGradientFrom: null,
   linkGradientTo: null,
+  linkBorderColor: null,
+  linkBorderThick: "thin",
   darkMode: false,
   plan: "free",
 };

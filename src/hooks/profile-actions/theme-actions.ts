@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { ProfileData, PageLayout, LinkLayout, LinkStyle, LinkRound, FontFamily, HeaderLayout, LinkAnimation, BackgroundTexture, DecoratorType } from "@/lib/profile-types";
+import type { ProfileData, PageLayout, LinkLayout, LinkStyle, LinkRound, LinkBorderThick, FontFamily, HeaderLayout, LinkAnimation, BackgroundTexture, DecoratorType } from "@/lib/profile-types";
 
 type SetWithHistory = (updater: (prev: ProfileData) => ProfileData, immediate?: boolean) => void;
 
@@ -87,6 +87,14 @@ export function useThemeActions(setWithHistory: SetWithHistory) {
     setWithHistory((prev) => ({ ...prev, linkGradientFrom: from, linkGradientTo: to }), true);
   }, [setWithHistory]);
 
+  const setLinkBorderColor = useCallback((color: string | null) => {
+    setWithHistory((prev) => ({ ...prev, linkBorderColor: color }), true);
+  }, [setWithHistory]);
+
+  const setLinkBorderThick = useCallback((thick: LinkBorderThick) => {
+    setWithHistory((prev) => ({ ...prev, linkBorderThick: thick }), true);
+  }, [setWithHistory]);
+
   return {
     setPageLayout,
     setColorTheme,
@@ -106,5 +114,7 @@ export function useThemeActions(setWithHistory: SetWithHistory) {
     setDecorator2,
     setDecorator2Text,
     setLinkGradient,
+    setLinkBorderColor,
+    setLinkBorderThick,
   };
 }

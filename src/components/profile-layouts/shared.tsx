@@ -3,20 +3,86 @@
 import { Fire, CursorClick, ArrowSquareOut } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { R2Image } from "@/components/ui/r2-image";
+import { useEditFocus, type EditSection } from "@/contexts/edit-focus-context";
 import type { ProfileData, ProfileLink } from "@/lib/profile-types";
 
 export function formatPrice(n: number) { return n.toLocaleString("ko-KR"); }
 
-export function ProfileAvatar({ src, nickname, size = "size-16" }: { src: string | null; nickname: string; size?: string }) {
+/* ─── Highlight wrapper (edit focus) ─── */
+
+export function HighlightWrapper({
+  section, className, inset, overlay, children,
+}: {
+  section: EditSection;
+  className?: string;
+  inset?: boolean;
+  overlay?: boolean;
+  children: React.ReactNode;
+}) {
+  const { activeSection } = useEditFocus();
+  const isActive = activeSection === section;
+  const highlightClass = overlay
+    ? "edit-highlight-overlay"
+    : inset
+      ? "edit-highlight-inset"
+      : "edit-highlight";
   return (
-    <div className={cn("relative rounded-full", size)}>
-      <div className={cn("flex items-center justify-center rounded-full bg-foreground font-bold text-background", size, size === "size-10" ? "text-xs" : size === "size-12" ? "text-xs" : size === "size-14" ? "text-sm" : "text-base")}>
-        {nickname.charAt(0) || "?"}
+    <div className={cn("rounded-lg transition-all duration-300", isActive && highlightClass, className)}>
+      {children}
+    </div>
+  );
+}
+
+/* ─── Profile Avatar — 이미지 없으면 "핫딜닷쿨" ─── */
+
+export function ProfileAvatar({ src, nickname, size = "size-16" }: { src: string | null; nickname: string; size?: string }) {
+  const textSize = size === "size-10" ? "text-[8px]" : size === "size-12" ? "text-[9px]" : size === "size-14" ? "text-[10px]" : "text-xs";
+  return (
+    <HighlightWrapper section="avatar" className="rounded-full">
+      <div className={cn("relative rounded-full", size)}>
+        <div className={cn("flex items-center justify-center rounded-full bg-foreground font-bold text-background", size, textSize)}>
+          핫딜닷쿨
+        </div>
+        {src && (
+          <R2Image
+            imageKey={src}
+            className={cn("absolute inset-0 rounded-full object-cover", size)}
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
+          />
+        )}
       </div>
+    </HighlightWrapper>
+  );
+}
+
+/* ─── Background Banner ─── */
+
+export function BackgroundBanner({ src, className }: { src: string | null; className?: string }) {
+  return (
+    <HighlightWrapper section="background" overlay className="rounded-none">
+      {src ? (
+        <R2Image imageKey={src} className={cn("w-full object-cover", className)} onError={(e) => { e.currentTarget.style.display = "none"; }} />
+      ) : (
+        <div className={cn("flex w-full items-center justify-center bg-muted/70", className)}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="size-8 text-muted-foreground/20" fill="currentColor">
+            <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z" />
+          </svg>
+        </div>
+      )}
+    </HighlightWrapper>
+  );
+}
+
+/* ─── Product Image — 이미지 없으면 "핫딜닷쿨" ─── */
+
+export function ProductImage({ src, className, textSize = "text-[8px]" }: { src: string | null; className?: string; textSize?: string }) {
+  return (
+    <div className={cn("relative flex items-center justify-center bg-foreground font-bold text-background", textSize, className)}>
+      핫딜닷쿨
       {src && (
         <R2Image
           imageKey={src}
-          className={cn("absolute inset-0 rounded-full object-cover", size)}
+          className="absolute inset-0 size-full object-cover"
           onError={(e) => { e.currentTarget.style.display = "none"; }}
         />
       )}
@@ -24,20 +90,7 @@ export function ProfileAvatar({ src, nickname, size = "size-16" }: { src: string
   );
 }
 
-export function ProductImage({ src, className }: { src: string | null; className?: string }) {
-  return (
-    <div className={cn("flex items-center justify-center bg-foreground text-[8px] font-bold text-background", className)}>
-      {src ? (
-        <>
-          핫딜닷쿨
-          <img src={src} alt="" className="absolute inset-0 size-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-        </>
-      ) : (
-        "핫딜닷쿨"
-      )}
-    </div>
-  );
-}
+/* ─── Price Tag ─── */
 
 export function PriceTag({ link }: { link: ProfileLink }) {
   const price = link.price;
@@ -59,6 +112,30 @@ export function HotBadge() {
       <Fire className="size-2" weight="fill" />HOT
     </span>
   );
+}
+
+/* ─── Border helpers ─── */
+
+export function getLinkRoundClass(round: string | undefined): string {
+  switch (round) {
+    case "none": return "rounded-none";
+    case "sm": return "rounded-lg";
+    case "md": return "rounded-2xl";
+    case "lg": return "rounded-3xl";
+    default: return "rounded-xl";
+  }
+}
+
+export function getLinkBorderStyle(profileData: ProfileData): React.CSSProperties {
+  const style: React.CSSProperties = {};
+  if (profileData.linkBorderColor) style.borderColor = profileData.linkBorderColor;
+  switch (profileData.linkBorderThick) {
+    case "none": style.borderWidth = "0px"; break;
+    case "thin": style.borderWidth = "1px"; break;
+    case "medium": style.borderWidth = "2px"; break;
+    case "thick": style.borderWidth = "3px"; break;
+  }
+  return style;
 }
 
 export interface LayoutProps {

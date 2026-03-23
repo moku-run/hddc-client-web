@@ -5,6 +5,7 @@ import { DeviceMobile, Desktop } from "@phosphor-icons/react";
 import { ToggleGroup } from "@/components/ui/toggle-group";
 import { PhonePreviewFrame, BrowserPreviewFrame } from "./dashboard-preview-frame";
 import { ProfilePreviewContent } from "./profile-preview-content";
+import { ProductProfile } from "@/components/profile-layouts";
 import type { ProfileData } from "@/lib/profile-types";
 import { FONT_FAMILY_CSS } from "@/lib/profile-types";
 import { loadFont } from "@/lib/font-loader";
@@ -61,7 +62,7 @@ export function ProfilePreview({ profileData, reorderLinks }: Props) {
           style={customStyle}
         >
           <PhonePreviewFrame className="w-[345px] shrink-0" slug={profileData.slug} backgroundColor={profileData.backgroundColor}>
-            <ProfilePreviewContent profileData={profileData} variant="mobile" onReorderLinks={reorderLinks} />
+            <ProductProfile profileData={profileData} />
           </PhonePreviewFrame>
         </div>
       ) : (
@@ -71,7 +72,7 @@ export function ProfilePreview({ profileData, reorderLinks }: Props) {
           style={customStyle}
         >
           <BrowserPreviewFrame className="h-full w-full" slug={profileData.slug} backgroundColor={profileData.backgroundColor}>
-            <ProfilePreviewContent profileData={profileData} variant="web" onReorderLinks={reorderLinks} />
+            <ProductProfile profileData={profileData} />
           </BrowserPreviewFrame>
         </div>
       )}

@@ -38,90 +38,6 @@ export function ProfileHeaderEditor({ profileData, updateProfile, headerLayout, 
     <section className="flex flex-col gap-4">
       <SectionHeader title="프로필" />
 
-      {/* Header layout selector — visual mini previews */}
-      <div>
-        <span className="mb-2 block text-[11px] text-muted-foreground">배치</span>
-        <div className="grid grid-cols-4 gap-2">
-          {/* 1. Center — 배경 + 아바타 중앙 */}
-          <button
-            onClick={() => setHeaderLayout("center")}
-            className={cn(
-              "group cursor-pointer overflow-hidden rounded-lg border-2 transition-all",
-              headerLayout === "center"
-                ? "border-foreground"
-                : "border-border hover:border-muted-foreground/50",
-            )}
-          >
-            <div className="-mx-[2px] -mt-[2px] flex h-8 w-[calc(100%+4px)] items-center justify-center rounded-t-md bg-muted-foreground/10">
-              <ImageIcon className="size-3 text-muted-foreground/25" />
-            </div>
-            <div className="flex flex-col items-center bg-background pb-2">
-              <div className="relative z-10 -mt-3 size-6 rounded-full border-2 border-background bg-muted" />
-              <div className="mt-1 h-1 w-8 rounded-full bg-muted-foreground/15" />
-              <div className="mt-0.5 h-1 w-5 rounded-full bg-muted-foreground/10" />
-            </div>
-          </button>
-
-          {/* 2. Left — 배경 + 아바타 좌측 */}
-          <button
-            onClick={() => setHeaderLayout("left")}
-            className={cn(
-              "group cursor-pointer overflow-hidden rounded-lg border-2 transition-all",
-              headerLayout === "left"
-                ? "border-foreground"
-                : "border-border hover:border-muted-foreground/50",
-            )}
-          >
-            <div className="-mx-[2px] -mt-[2px] flex h-8 w-[calc(100%+4px)] items-center justify-center rounded-t-md bg-muted-foreground/10">
-              <ImageIcon className="size-3 text-muted-foreground/25" />
-            </div>
-            <div className="flex items-start gap-1.5 bg-background px-2 pb-2">
-              <div className="relative z-10 -mt-3 size-6 shrink-0 rounded-full border-2 border-background bg-muted" />
-              <div className="flex flex-col gap-1 pt-1.5">
-                <div className="h-1 w-7 rounded-full bg-muted-foreground/15" />
-                <div className="h-1 w-5 rounded-full bg-muted-foreground/10" />
-              </div>
-            </div>
-          </button>
-
-          {/* 3. Avatar-only — 배경 없이 아바타 + 텍스트만 */}
-          <button
-            onClick={() => setHeaderLayout("avatar-only")}
-            className={cn(
-              "group cursor-pointer overflow-hidden rounded-lg border-2 transition-all",
-              headerLayout === "avatar-only"
-                ? "border-foreground"
-                : "border-border hover:border-muted-foreground/50",
-            )}
-          >
-            <div className="flex flex-col items-center gap-1 bg-background px-2 pb-2 pt-3">
-              <div className="size-7 rounded-full bg-muted-foreground/20" />
-              <div className="h-1 w-8 rounded-full bg-muted-foreground/15" />
-              <div className="h-1 w-5 rounded-full bg-muted-foreground/10" />
-            </div>
-          </button>
-
-          {/* 4. Banner-only — 배경만 크게, 아바타 없음 */}
-          <button
-            onClick={() => setHeaderLayout("banner-only")}
-            className={cn(
-              "group cursor-pointer overflow-hidden rounded-lg border-2 transition-all",
-              headerLayout === "banner-only"
-                ? "border-foreground"
-                : "border-border hover:border-muted-foreground/50",
-            )}
-          >
-            <div className="-mx-[2px] -mt-[2px] flex h-10 w-[calc(100%+4px)] items-center justify-center rounded-t-md bg-muted-foreground/10">
-              <ImageIcon className="size-4 text-muted-foreground/25" />
-            </div>
-            <div className="flex flex-col items-center gap-1 bg-background px-2 pb-2 pt-1.5">
-              <div className="h-1 w-8 rounded-full bg-muted-foreground/15" />
-              <div className="h-1 w-5 rounded-full bg-muted-foreground/10" />
-            </div>
-          </button>
-        </div>
-      </div>
-
       {/* Slug — top (matches mobile visual order: URL bar first) */}
       <div {...slugFocus}>
         <Label className="text-xs text-muted-foreground">프로필 링크</Label>
@@ -131,13 +47,12 @@ export function ProfileHeaderEditor({ profileData, updateProfile, headerLayout, 
           </span>
           <input
             value={profileData.slug}
-            onChange={(e) =>
-              updateProfile({
-                slug: e.target.value
-                  .replace(/[^a-zA-Z0-9-_]/g, "")
-                  .slice(0, 30),
-              })
-            }
+            onChange={(e) => {
+              const raw = e.target.value;
+              const cleaned = raw.replace(/[^a-zA-Z0-9-_]/g, "").slice(0, 30);
+              if (raw !== cleaned) toast.error("영문, 숫자, -, _ 만 입력 가능합니다");
+              updateProfile({ slug: cleaned });
+            }}
             placeholder="yourname"
             className="h-full flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
             maxLength={30}
@@ -260,14 +175,21 @@ export function ProfileHeaderEditor({ profileData, updateProfile, headerLayout, 
       {/* Nickname */}
       <div {...nicknameFocus}>
         <Label htmlFor="nickname" className="text-xs text-muted-foreground">닉네임</Label>
-        <InputWithCounter
-          id="nickname"
-          placeholder="닉네임을 입력해주세요."
-          value={profileData.nickname}
-          onChange={(val) => updateProfile({ nickname: val })}
-          maxLength={20}
-          className="mt-1 h-8"
-        />
+        <div className="relative mt-1">
+          <Input
+            id="nickname"
+            placeholder="닉네임을 입력해주세요."
+            value={profileData.nickname}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val.length > 20) { toast.error("닉네임은 20자까지 입력 가능합니다"); updateProfile({ nickname: val.slice(0, 20) }); return; }
+              updateProfile({ nickname: val });
+            }}
+            className="h-8 pr-10"
+            maxLength={21}
+          />
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground">{profileData.nickname.length}/20</span>
+        </div>
       </div>
 
       {/* Bio — textarea, max 80 chars, max 3 lines */}
@@ -281,7 +203,7 @@ export function ProfileHeaderEditor({ profileData, updateProfile, headerLayout, 
             let val = e.target.value;
             const lines = val.split("\n");
             if (lines.length > 3) val = lines.slice(0, 3).join("\n");
-            val = val.slice(0, 80);
+            if (val.length > 80) { toast.error("한 줄 소개는 80자까지 입력 가능합니다"); val = val.slice(0, 80); }
             updateProfile({ bio: val });
           }}
           rows={3}

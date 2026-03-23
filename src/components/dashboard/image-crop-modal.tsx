@@ -252,6 +252,7 @@ export function ImageCropModal({
       ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
       onApply(canvas.toDataURL("image/jpeg", 0.85));
     };
+    img.crossOrigin = "anonymous";
     img.src = imgSrc;
   }
 
