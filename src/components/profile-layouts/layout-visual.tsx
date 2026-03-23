@@ -1,8 +1,7 @@
 "use client";
 
-import { Fire } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { ProfileAvatar, ProductImage, LinkStats, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps, formatPrice } from "./shared";
+import { ProfileAvatar, ProductImage, LinkStats, HotBadge, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps, formatPrice } from "./shared";
 
 export function LayoutVisual({ profileData, links }: LayoutProps) {
   return (
@@ -37,12 +36,8 @@ export function LayoutVisual({ profileData, links }: LayoutProps) {
                     <LinkStats link={link} iconSize="size-2" className="text-[8px] text-white/70" />
                   </div>
                 </div>
-                {(link.clicks ?? 0) >= 500 && (
-                  <div className="absolute left-1.5 top-1.5">
-                    <span className="flex items-center gap-0.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
-                      <Fire className="size-2" weight="fill" />HOT
-                    </span>
-                  </div>
+                {(link.likes ?? 0) >= 500 && (
+                  <div className="absolute left-1.5 top-1.5"><HotBadge /></div>
                 )}
               </a>
             );

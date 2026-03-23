@@ -106,10 +106,10 @@ export function PriceTag({ link }: { link: ProfileLink }) {
   );
 }
 
-export function HotBadge() {
+export function HotBadge({ className }: { className?: string }) {
   return (
-    <span className="flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
-      <Fire className="size-2" weight="fill" />HOT
+    <span className={cn("flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-1.5 py-0.5 text-[8px] font-bold text-white", className)}>
+      <Fire className="size-2" weight="fill" />인기
     </span>
   );
 }
@@ -123,13 +123,11 @@ export function compactNumber(n: number): string {
 }
 
 export function LinkStats({ link, iconSize = "size-2.5", className }: { link: ProfileLink; iconSize?: string; className?: string }) {
-  const hasClicks = link.clicks != null && link.clicks > 0;
-  const hasLikes = link.likes != null && link.likes > 0;
-  if (!hasClicks && !hasLikes) return null;
+  if (link.clicks == null && link.likes == null) return null;
   return (
     <span className={cn("flex items-center gap-1.5 opacity-85", className)}>
-      {hasClicks && <span className="flex items-center gap-0.5"><CursorClick className={iconSize} />{compactNumber(link.clicks!)}</span>}
-      {hasLikes && <span className="flex items-center gap-0.5"><Heart className={iconSize} />{compactNumber(link.likes!)}</span>}
+      {link.clicks != null && <span className="flex items-center gap-0.5"><CursorClick className={iconSize} />{compactNumber(link.clicks)}</span>}
+      {link.likes != null && <span className="flex items-center gap-0.5"><Heart className={iconSize} />{compactNumber(link.likes)}</span>}
     </span>
   );
 }

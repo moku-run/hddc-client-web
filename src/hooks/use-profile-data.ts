@@ -29,10 +29,10 @@ export function toProfileData(res: ProfileResponse): ProfileData {
     backgroundUrl: res.backgroundUrl,
     backgroundColor: res.backgroundColor,
     fontColor: res.fontColor,
-    pageLayout: ((res as unknown as Record<string, unknown>).pageLayout as ProfileData["pageLayout"]) ?? "list",
+    pageLayout: (res.pageLayout as ProfileData["pageLayout"]) ?? "list",
     linkLayout: res.linkLayout as ProfileData["linkLayout"],
     linkStyle: res.linkStyle as ProfileData["linkStyle"],
-    linkRound: ((res as unknown as Record<string, unknown>).linkRound as ProfileData["linkRound"]) ?? "sm",
+    linkRound: (res.linkRound as ProfileData["linkRound"]) ?? "sm",
     fontFamily: res.fontFamily as ProfileData["fontFamily"],
     headerLayout: res.headerLayout as ProfileData["headerLayout"],
     linkAnimation: res.linkAnimation as ProfileData["linkAnimation"],
@@ -46,8 +46,8 @@ export function toProfileData(res: ProfileResponse): ProfileData {
     decorator2Text: res.decorator2Text ?? null,
     linkGradientFrom: res.linkGradientFrom ?? null,
     linkGradientTo: res.linkGradientTo ?? null,
-    linkBorderColor: ((res as unknown as Record<string, unknown>).linkBorderColor as string) ?? null,
-    linkBorderThick: ((res as unknown as Record<string, unknown>).linkBorderThick as ProfileData["linkBorderThick"]) ?? "thin",
+    linkBorderColor: res.linkBorderColor ?? null,
+    linkBorderThick: (res.linkBorderThick as ProfileData["linkBorderThick"]) ?? "thin",
     darkMode: res.darkMode,
     links: res.links.map((l): ProfileLink => ({
       id: l.id,
@@ -57,6 +57,13 @@ export function toProfileData(res: ProfileResponse): ProfileData {
       description: l.description,
       order: l.order,
       enabled: l.enabled,
+      price: l.price ?? null,
+      originalPrice: l.originalPrice ?? null,
+      discountRate: l.discountRate ?? null,
+      store: l.store ?? null,
+      category: l.category ?? null,
+      clicks: l.clicks ?? 0,
+      likes: l.likes ?? 0,
     })),
     socials: res.socials.map((s): SocialLink => ({
       id: s.id,
@@ -178,7 +185,7 @@ export function useProfileData() {
   );
 
   // ─── 서버에 저장 (PATCH) ───
-  const saveNow = useCallback(async (): Promise<boolean> => {
+  const saveNow = useCallback(async (opts?: { skipSync?: boolean }): Promise<boolean> => {
     setSaveStatus("saving");
     try {
       const res = await profileApi.updateMe({
@@ -217,6 +224,11 @@ export function useProfileData() {
           description: l.description,
           order: l.order,
           enabled: l.enabled,
+          price: l.price ?? null,
+          originalPrice: l.originalPrice ?? null,
+          discountRate: l.discountRate ?? null,
+          store: l.store ?? null,
+          category: l.category ?? null,
         })),
         socials: profileData.socials.map((s) => ({
           ...(s.id > 0 ? { id: s.id } : {}),
@@ -226,7 +238,8 @@ export function useProfileData() {
       } as Record<string, unknown>);
 
       // 서버 응답으로 상태 동기화 (서버가 발급한 id 등 반영)
-      if (res.payload) {
+      // 페이지 이동 예정이면 불필요한 리렌더 방지를 위해 skip
+      if (res.payload && !opts?.skipSync) {
         const synced = toProfileData(res.payload);
         skipHistoryRef.current = true;
         setProfileData(synced);

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ProfileAvatar, ProductImage, PriceTag, LinkStats, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps } from "./shared";
+import { ProfileAvatar, ProductImage, PriceTag, LinkStats, HotBadge, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps } from "./shared";
 
 export function LayoutGrid({ profileData, links }: LayoutProps) {
   return (
@@ -27,6 +27,9 @@ export function LayoutGrid({ profileData, links }: LayoutProps) {
               <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={cn("group overflow-hidden border border-border transition-colors hover:border-primary/30", getLinkRoundClass(profileData.linkRound), !link.enabled && "opacity-40")} style={getLinkBorderStyle(profileData)}>
                 <div className="relative flex h-24 items-center justify-center overflow-hidden">
                   <ProductImage src={link.imageUrl} className="size-full" textSize="text-xs" />
+                  {(link.likes ?? 0) >= 500 && (
+                    <div className="absolute left-1.5 top-1.5"><HotBadge /></div>
+                  )}
                 </div>
                 <div className="p-2">
                   <p className="line-clamp-2 text-[10px] font-semibold leading-tight">{link.title}</p>

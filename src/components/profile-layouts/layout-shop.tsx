@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { ProfileAvatar, ProductImage, PriceTag, LinkStats, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps } from "./shared";
+import { ProfileAvatar, ProductImage, PriceTag, LinkStats, HotBadge, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps } from "./shared";
 
 export function LayoutShop({ profileData, links }: LayoutProps) {
   const categories = ["전체", ...new Set(links.map((l) => l.category).filter(Boolean))];
@@ -49,6 +49,9 @@ export function LayoutShop({ profileData, links }: LayoutProps) {
               <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={cn("group flex gap-3 border border-border p-2.5 transition-colors hover:border-primary/30", getLinkRoundClass(profileData.linkRound), !link.enabled && "opacity-40")} style={getLinkBorderStyle(profileData)}>
                 <div className="relative size-20 shrink-0 overflow-hidden rounded-lg">
                   <ProductImage src={link.imageUrl} className="size-full" textSize="text-sm" />
+                  {(link.likes ?? 0) >= 500 && (
+                    <div className="absolute left-0.5 top-0.5"><HotBadge className="px-1 py-0 text-[6px]" /></div>
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-2 min-h-[2.25rem] text-xs font-semibold leading-snug">{link.title}</p>

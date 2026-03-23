@@ -92,7 +92,7 @@ export default function ProfileEditPage() {
                   icon={<FloppyDisk className="size-4" />}
                   label="저장"
                   onClick={async () => {
-                    const ok = await profile.saveNow();
+                    const ok = await profile.saveNow({ skipSync: true });
                     if (ok) router.push("/dashboard");
                   }}
                 />

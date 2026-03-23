@@ -238,6 +238,13 @@ export interface ProfileLinkResponse {
   description: string | null;
   order: number;
   enabled: boolean;
+  price: number | null;
+  originalPrice: number | null;
+  discountRate: number | null;
+  store: string | null;
+  category: string | null;
+  clicks: number;
+  likes: number;
 }
 
 export interface SocialLinkResponse {
@@ -254,8 +261,10 @@ export interface ProfileResponse {
   backgroundUrl: string | null;
   backgroundColor: string | null;
   fontColor: string | null;
+  pageLayout: string;
   linkLayout: string;
   linkStyle: string;
+  linkRound: string;
   fontFamily: string;
   headerLayout: string;
   linkAnimation: string;
@@ -269,6 +278,8 @@ export interface ProfileResponse {
   decorator2Text: string | null;
   linkGradientFrom: string | null;
   linkGradientTo: string | null;
+  linkBorderColor: string | null;
+  linkBorderThick: string;
   darkMode: boolean;
   links: ProfileLinkResponse[];
   socials: SocialLinkResponse[];

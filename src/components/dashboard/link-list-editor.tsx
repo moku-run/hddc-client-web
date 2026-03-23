@@ -116,7 +116,7 @@ export function LinkListEditor({ links, addLink, updateLink, removeLink, toggleL
 
   return (
     <section className="flex flex-col gap-3">
-      <SectionHeader title="핫딜상품" badge={`${links.length}/20`} />
+      <SectionHeader title="핫딜상품" badge={`${links.length}/30`} />
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={links.map((l) => l.id)} strategy={verticalListSortingStrategy}>
@@ -249,7 +249,7 @@ export function LinkListEditor({ links, addLink, updateLink, removeLink, toggleL
         </SortableContext>
       </DndContext>
 
-      <Button variant="outline" className="h-9 w-full text-sm" onClick={addLink} disabled={links.length >= 20}>
+      <Button variant="outline" className="h-9 w-full text-sm" onClick={addLink} disabled={links.length >= 30}>
         <Plus className="mr-1 size-4" />
         상품 추가
       </Button>

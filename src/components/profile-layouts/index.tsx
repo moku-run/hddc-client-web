@@ -31,11 +31,11 @@ const SAMPLE_LINKS: ProfileLink[] = [
 ];
 
 const MOCK_STATS = [
-  { clicks: 1284, likes: 47 },
-  { clicks: 856, likes: 23 },
-  { clicks: 342, likes: 8 },
-  { clicks: 127, likes: 5 },
-  { clicks: 2041, likes: 91 },
+  { clicks: 1284, likes: 523 },
+  { clicks: 856, likes: 231 },
+  { clicks: 342, likes: 89 },
+  { clicks: 127, likes: 34 },
+  { clicks: 2041, likes: 712 },
 ];
 
 export function ProductProfile({ profileData, links, preview }: ProductProfileProps) {
@@ -44,8 +44,8 @@ export function ProductProfile({ profileData, links, preview }: ProductProfilePr
   const displayLinks = preview
     ? baseLinks.map((l, i) => ({
         ...l,
-        clicks: l.clicks ?? MOCK_STATS[i % MOCK_STATS.length].clicks,
-        likes: l.likes ?? MOCK_STATS[i % MOCK_STATS.length].likes,
+        clicks: l.clicks || MOCK_STATS[i % MOCK_STATS.length].clicks,
+        likes: l.likes || MOCK_STATS[i % MOCK_STATS.length].likes,
       }))
     : baseLinks;
   const isPlaceholder = enabledLinks.length === 0;

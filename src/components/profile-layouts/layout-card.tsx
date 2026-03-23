@@ -1,8 +1,7 @@
 "use client";
 
-import { Fire } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { ProfileAvatar, ProductImage, PriceTag, LinkStats, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps, formatPrice } from "./shared";
+import { ProfileAvatar, ProductImage, PriceTag, LinkStats, HotBadge, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps, formatPrice } from "./shared";
 
 export function LayoutCard({ profileData, links }: LayoutProps) {
   return (
@@ -28,10 +27,8 @@ export function LayoutCard({ profileData, links }: LayoutProps) {
               <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={cn("group overflow-hidden border border-border transition-colors hover:border-primary/30", getLinkRoundClass(profileData.linkRound), !link.enabled && "opacity-40")} style={getLinkBorderStyle(profileData)}>
                 <div className="relative flex h-32 items-center justify-center overflow-hidden">
                   <ProductImage src={link.imageUrl} className="size-full" textSize="text-base" />
-                  {(link.clicks ?? 0) >= 500 && (
-                    <span className="absolute left-2 top-2 flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-2 py-0.5 text-[9px] font-bold text-white">
-                      <Fire className="size-2.5" weight="fill" />인기
-                    </span>
+                  {(link.likes ?? 0) >= 500 && (
+                    <div className="absolute left-2 top-2"><HotBadge /></div>
                   )}
                 </div>
                 <div className="p-3">
