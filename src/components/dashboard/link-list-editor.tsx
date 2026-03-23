@@ -98,11 +98,6 @@ export function LinkListEditor({ links, addLink, updateLink, removeLink, toggleL
 
   function handleOriginalPriceChange(id: number, originalStr: string, currentPrice: number | null | undefined) {
     const originalPrice = originalStr ? Number(originalStr) : null;
-    // 원가가 핫딜가보다 낮으면 핫딜가와 같게
-    if (originalPrice != null && currentPrice != null && originalPrice < currentPrice) {
-      updateLink(id, { originalPrice: currentPrice, discountRate: 0 });
-      return;
-    }
     let discountRate: number | null = null;
     if (currentPrice != null && originalPrice != null && originalPrice > currentPrice) {
       discountRate = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);

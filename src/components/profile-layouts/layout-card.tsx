@@ -16,7 +16,7 @@ export function LayoutCard({ profileData, links }: LayoutProps) {
         </HighlightWrapper>
         {profileData.bio && (
           <HighlightWrapper section="bio" className="px-3">
-            <p className="whitespace-pre-wrap text-xs text-muted-foreground">{profileData.bio}</p>
+            <p className="whitespace-pre-wrap text-xs opacity-60">{profileData.bio}</p>
           </HighlightWrapper>
         )}
       </div>
@@ -39,9 +39,9 @@ export function LayoutCard({ profileData, links }: LayoutProps) {
                   <div className="mt-1.5 flex items-baseline gap-1.5">
                     {link.discountRate != null && <span className="text-sm font-bold text-red-500">{link.discountRate}%</span>}
                     {link.price != null && <span className="text-base font-bold">{formatPrice(link.price)}원</span>}
-                    {link.originalPrice != null && link.price != null && link.originalPrice > link.price && <span className="text-xs text-muted-foreground line-through">{formatPrice(link.originalPrice)}원</span>}
+                    {link.originalPrice != null && link.price != null && link.originalPrice > link.price && <span className="text-xs opacity-50 line-through">{formatPrice(link.originalPrice)}원</span>}
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                  <div className="mt-1 flex items-center justify-between text-[10px] opacity-50">
                     <span>{[link.store, link.category].filter(Boolean).join(" · ") || "\u00A0"}</span>
                     <LinkStats link={link} className="text-[10px]" />
                   </div>

@@ -101,7 +101,7 @@ export function PriceTag({ link }: { link: ProfileLink }) {
     <span className="flex flex-wrap items-baseline gap-x-1">
       {discount != null && <span className="text-[10px] font-bold text-red-500">{discount}%</span>}
       <span className="text-xs font-bold">{formatPrice(price)}원</span>
-      {originalPrice != null && originalPrice > price && <span className="text-[9px] text-muted-foreground line-through">{formatPrice(originalPrice)}원</span>}
+      {originalPrice != null && originalPrice > price && <span className="text-[9px] opacity-50 line-through">{formatPrice(originalPrice)}원</span>}
     </span>
   );
 }
@@ -127,7 +127,7 @@ export function LinkStats({ link, iconSize = "size-2.5", className }: { link: Pr
   const hasLikes = link.likes != null && link.likes > 0;
   if (!hasClicks && !hasLikes) return null;
   return (
-    <span className={cn("flex items-center gap-1.5 text-muted-foreground", className)}>
+    <span className={cn("flex items-center gap-1.5 opacity-85", className)}>
       {hasClicks && <span className="flex items-center gap-0.5"><CursorClick className={iconSize} />{compactNumber(link.clicks!)}</span>}
       {hasLikes && <span className="flex items-center gap-0.5"><Heart className={iconSize} />{compactNumber(link.likes!)}</span>}
     </span>

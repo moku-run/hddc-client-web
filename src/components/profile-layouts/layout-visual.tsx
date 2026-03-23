@@ -13,7 +13,7 @@ export function LayoutVisual({ profileData, links }: LayoutProps) {
           <HighlightWrapper section="nickname">
             <p className="text-sm font-bold">{profileData.nickname || "닉네임"}</p>
           </HighlightWrapper>
-          <p className="text-[10px] text-muted-foreground">@{profileData.slug || "username"} · 핫딜상품 {links.length}개</p>
+          <p className="text-[10px] opacity-60">@{profileData.slug || "username"} · 핫딜상품 {links.length}개</p>
         </div>
       </div>
 

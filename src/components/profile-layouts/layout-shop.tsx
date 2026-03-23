@@ -20,7 +20,7 @@ export function LayoutShop({ profileData, links }: LayoutProps) {
           </HighlightWrapper>
           {profileData.bio && (
             <HighlightWrapper section="bio">
-              <p className="whitespace-pre-wrap text-[10px] text-muted-foreground">{profileData.bio}</p>
+              <p className="whitespace-pre-wrap text-[10px] opacity-60">{profileData.bio}</p>
             </HighlightWrapper>
           )}
         </div>
@@ -53,7 +53,7 @@ export function LayoutShop({ profileData, links }: LayoutProps) {
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-2 min-h-[2.25rem] text-xs font-semibold leading-snug">{link.title}</p>
                   <div className="mt-1"><PriceTag link={link} /></div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[9px] opacity-50">
                     <LinkStats link={link} className="text-[9px]" />
                     {link.store && <span>{link.store}</span>}
                     {link.category && <span>{link.category}</span>}

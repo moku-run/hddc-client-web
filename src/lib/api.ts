@@ -78,11 +78,11 @@ export async function request<T = null>(
     if (newToken) {
       return request<T>(path, options, true);
     }
-    // refresh도 실패 → 로그아웃
+    // refresh도 실패 → 로그인 모달 트리거
     localStorage.removeItem("hddc-auth");
     localStorage.removeItem("hddc-token");
     localStorage.removeItem("hddc-user");
-    window.location.href = "/auth/login";
+    window.dispatchEvent(new CustomEvent("hddc:auth-expired"));
   }
 
   if (!body.success) {

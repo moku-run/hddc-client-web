@@ -16,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { AuthModal } from "@/components/auth/auth-modal";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://hotdeal.cool";
 
@@ -23,6 +24,13 @@ export default function ProfileEditPage() {
   const router = useRouter();
   const profile = useProfileData();
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setAuthModalOpen(true);
+    window.addEventListener("hddc:auth-expired", handler);
+    return () => window.removeEventListener("hddc:auth-expired", handler);
+  }, []);
 
   const undoRef = useRef(profile.undoProfile);
   const redoRef = useRef(profile.redoProfile);
@@ -62,10 +70,11 @@ export default function ProfileEditPage() {
   if (profile.loadStatus === "error") {
     return (
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-center gap-4 px-4 py-24 sm:px-6">
-        <p className="text-sm text-muted-foreground">프로필을 불러오지 못했습니다.</p>
-        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-          다시 시도
+        <p className="text-sm text-muted-foreground">세션이 만료되었습니다. 다시 로그인해주세요.</p>
+        <Button variant="outline" size="sm" onClick={() => setAuthModalOpen(true)}>
+          로그인
         </Button>
+        <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
       </div>
     );
   }
@@ -173,6 +182,7 @@ export default function ProfileEditPage() {
         confirmLabel="초기화"
         variant="destructive"
       />
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </EditFocusProvider>
   );
 }

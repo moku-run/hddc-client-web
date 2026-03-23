@@ -16,7 +16,7 @@ export function LayoutList({ profileData, links }: LayoutProps) {
         </HighlightWrapper>
         {profileData.bio && (
           <HighlightWrapper section="bio" className="px-3">
-            <p className="whitespace-pre-wrap text-xs text-muted-foreground">{profileData.bio}</p>
+            <p className="whitespace-pre-wrap text-xs opacity-60">{profileData.bio}</p>
           </HighlightWrapper>
         )}
       </div>
@@ -32,7 +32,7 @@ export function LayoutList({ profileData, links }: LayoutProps) {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-semibold">{link.title}</p>
                   <PriceTag link={link} />
-                  <div className="mt-0.5 flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[9px] opacity-50">
                     <LinkStats link={link} className="text-[9px]" />
                     {link.store && <span>{link.store}</span>}
                     {link.category && <span>{link.category}</span>}

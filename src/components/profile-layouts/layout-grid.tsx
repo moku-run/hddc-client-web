@@ -15,7 +15,7 @@ export function LayoutGrid({ profileData, links }: LayoutProps) {
         </HighlightWrapper>
         {profileData.bio && (
           <HighlightWrapper section="bio" className="px-3">
-            <p className="whitespace-pre-wrap text-xs text-muted-foreground">{profileData.bio}</p>
+            <p className="whitespace-pre-wrap text-xs opacity-60">{profileData.bio}</p>
           </HighlightWrapper>
         )}
       </div>
@@ -31,7 +31,7 @@ export function LayoutGrid({ profileData, links }: LayoutProps) {
                 <div className="p-2">
                   <p className="line-clamp-2 text-[10px] font-semibold leading-tight">{link.title}</p>
                   <div className="mt-1"><PriceTag link={link} /></div>
-                  <div className="mt-0.5 flex items-center gap-1 truncate text-[8px] text-muted-foreground">
+                  <div className="mt-0.5 flex items-center gap-1 truncate text-[8px] opacity-50">
                     <LinkStats link={link} iconSize="size-2" className="text-[8px]" />
                     {link.store && <span>{link.store}</span>}
                     {link.category && <span>{link.category}</span>}
