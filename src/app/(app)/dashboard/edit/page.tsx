@@ -123,7 +123,7 @@ export default function ProfileEditPage() {
         </div>
 
         {/* Editor */}
-        <div className="min-w-0 w-full max-w-3xl">
+        <div className="min-w-0 w-full max-w-md">
         <div className="mb-4 flex h-8 items-center gap-3">
           <h1 className="text-lg font-semibold">프로필 편집</h1>
           <span className="text-xs text-muted-foreground">
@@ -153,7 +153,7 @@ export default function ProfileEditPage() {
 
         {/* Preview — sticky */}
         <div className="hidden lg:block lg:flex-1">
-          <div className="sticky top-4">
+          <div className="sticky top-6">
             <ProfilePreview
               profileData={profile.profileData}
               reorderLinks={profile.reorderLinks}
