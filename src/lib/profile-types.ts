@@ -13,7 +13,7 @@ export const SOCIAL_PLATFORMS = [
 
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
 
-export type PageLayout = "list" | "card" | "grid" | "magazine" | "shop" | "visual";
+export type PageLayout = "list" | "card" | "grid" | "grid-3" | "shop" | "visual";
 
 export type LinkLayout = "list" | "grid-2" | "grid-3";
 

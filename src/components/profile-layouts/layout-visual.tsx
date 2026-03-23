@@ -2,7 +2,7 @@
 
 import { Fire } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { ProfileAvatar, ProductImage, HighlightWrapper, getLinkRoundClass, type LayoutProps, formatPrice } from "./shared";
+import { ProfileAvatar, ProductImage, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps, formatPrice } from "./shared";
 
 export function LayoutVisual({ profileData, links }: LayoutProps) {
   return (
@@ -23,7 +23,7 @@ export function LayoutVisual({ profileData, links }: LayoutProps) {
           {links.map((link, i) => {
             const tall = i % 3 === 0;
             return (
-              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={cn("group relative overflow-hidden", getLinkRoundClass(profileData.linkRound), !link.enabled && "opacity-40")}>
+              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={cn("group relative overflow-hidden border border-border", getLinkRoundClass(profileData.linkRound), !link.enabled && "opacity-40")} style={getLinkBorderStyle(profileData)}>
                 <div className={cn("relative flex items-center justify-center overflow-hidden", tall ? "h-48" : "h-32")}>
                   <ProductImage src={link.imageUrl} className="size-full" textSize="text-sm" />
                 </div>

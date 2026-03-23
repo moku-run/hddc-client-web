@@ -23,7 +23,13 @@ export function ProfileEditor(props: ProfileActions) {
 
       <LayoutEditor
         pageLayout={props.profileData.pageLayout}
+        linkRound={props.profileData.linkRound}
+        linkBorderColor={props.profileData.linkBorderColor}
+        linkBorderThick={props.profileData.linkBorderThick}
         setPageLayout={props.setPageLayout}
+        setLinkRound={props.setLinkRound}
+        setLinkBorderColor={props.setLinkBorderColor}
+        setLinkBorderThick={props.setLinkBorderThick}
       />
 
       <hr className="border-border" />
@@ -48,9 +54,6 @@ export function ProfileEditor(props: ProfileActions) {
         customPrimaryColor={props.profileData.customPrimaryColor}
         customSecondaryColor={props.profileData.customSecondaryColor}
         fontFamily={props.profileData.fontFamily}
-        linkRound={props.profileData.linkRound}
-        linkBorderColor={props.profileData.linkBorderColor}
-        linkBorderThick={props.profileData.linkBorderThick}
         setColorTheme={props.setColorTheme}
         setDarkMode={props.setDarkMode}
         setBackgroundColor={props.setBackgroundColor}
@@ -58,9 +61,6 @@ export function ProfileEditor(props: ProfileActions) {
         setBackgroundTexture={props.setBackgroundTexture}
         setCustomColors={props.setCustomColors}
         setFontFamily={props.setFontFamily}
-        setLinkRound={props.setLinkRound}
-        setLinkBorderColor={props.setLinkBorderColor}
-        setLinkBorderThick={props.setLinkBorderThick}
       />
 
       <hr className="border-border" />

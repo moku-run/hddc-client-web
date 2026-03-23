@@ -4,7 +4,7 @@ import type { ProfileData, ProfileLink, PageLayout } from "@/lib/profile-types";
 import { LayoutList } from "./layout-list";
 import { LayoutCard } from "./layout-card";
 import { LayoutGrid } from "./layout-grid";
-import { LayoutMagazine } from "./layout-magazine";
+import { LayoutGrid3 } from "./layout-grid3";
 import { LayoutShop } from "./layout-shop";
 import { LayoutVisual } from "./layout-visual";
 
@@ -17,7 +17,7 @@ const LAYOUT_MAP: Record<PageLayout, React.ComponentType<{ profileData: ProfileD
   list: LayoutList,
   card: LayoutCard,
   grid: LayoutGrid,
-  magazine: LayoutMagazine,
+  "grid-3": LayoutGrid3,
   shop: LayoutShop,
   visual: LayoutVisual,
 };
