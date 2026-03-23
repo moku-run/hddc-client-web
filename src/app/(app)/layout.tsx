@@ -1,10 +1,14 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { GlobalHeader } from "@/components/global-header";
 import { Fab } from "@/components/fab";
 import { SiteFooter } from "@/components/site-footer";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isEdit = pathname === "/dashboard/edit";
+
   return (
     <div className="flex h-svh flex-col">
       <GlobalHeader />
@@ -12,7 +16,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex-1">
           {children}
         </div>
-        <SiteFooter />
+        {!isEdit && <SiteFooter />}
       </main>
       <Fab />
     </div>

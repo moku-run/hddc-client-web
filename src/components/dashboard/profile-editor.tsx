@@ -11,7 +11,7 @@ type ProfileActions = ReturnType<typeof useProfileData>;
 
 export function ProfileEditor(props: ProfileActions) {
   return (
-    <div className="flex flex-col gap-8 overflow-y-auto p-6">
+    <div className="flex flex-col gap-8 overflow-y-auto scrollbar-none p-6">
       <ProfileHeaderEditor
         profileData={props.profileData}
         updateProfile={props.updateProfile}

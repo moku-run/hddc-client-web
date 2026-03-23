@@ -12,6 +12,7 @@ import {
   FloppyDisk, Check, CircleNotch, Link as LinkIcon,
   ArrowCounterClockwise, ArrowClockwise, Trash,
 } from "@phosphor-icons/react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -71,100 +72,92 @@ export default function ProfileEditPage() {
 
   return (
     <EditFocusProvider>
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-        <div className="flex gap-4">
-          {/* Sticky Sidebar — edit tools */}
-          <div className="hidden lg:block">
-            <div className="sticky top-[50vh] -translate-y-1/2 flex flex-col items-center gap-1 rounded-xl border border-border bg-card p-1.5 shadow-sm">
-              <SidebarButton
-                icon={<ArrowCounterClockwise className="size-4" />}
-                label="되돌리기"
-                onClick={profile.undoProfile}
-                disabled={!profile.canUndo}
-              />
-              <SidebarButton
-                icon={<ArrowClockwise className="size-4" />}
-                label="다시 실행"
-                onClick={profile.redoProfile}
-                disabled={!profile.canRedo}
-              />
-              <div className="my-1 h-px w-full bg-border" />
-              <SidebarButton
-                icon={<Trash className="size-4" />}
-                label="초기화"
-                onClick={() => setConfirmResetOpen(true)}
-                variant="destructive"
-              />
-            </div>
-          </div>
-
-          {/* Center: Editor Column */}
-          <div className="min-w-0 lg:w-2/5">
-            <div className="mb-4 flex h-8 items-center gap-3">
-              <h1 className="text-lg font-semibold">프로필 편집</h1>
-            </div>
-            <div className="rounded-xl border border-border bg-card shadow-sm">
-              <ProfileEditor {...profile} />
-            </div>
-          </div>
-
-          {/* Right: Preview Column — sticky */}
-          <div className="hidden lg:block lg:flex-1">
-            <div className="sticky top-6">
-              <div className="mb-4 flex h-8 items-center justify-end gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {profile.saveStatus === "saving" && (
-                    <span className="inline-flex items-center gap-1">
-                      <CircleNotch className="size-3 animate-spin" />
-                      저장 중...
-                    </span>
-                  )}
-                  {profile.saveStatus === "saved" && (
-                    <span className="inline-flex items-center gap-1 text-primary">
-                      <Check className="size-3" />
-                      저장됨
-                    </span>
-                  )}
-                  {profile.saveStatus === "error" && (
-                    <span className="inline-flex items-center gap-1 text-destructive">
-                      저장 실패
-                    </span>
-                  )}
-                </span>
-                <MobilePreviewButton profileData={profile.profileData} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 text-xs"
+      {/* Editor + Sidebar + Preview */}
+      <div className="mx-auto flex max-w-5xl gap-4 px-4 py-6 sm:px-6">
+        {/* Sticky Sidebar */}
+        <div className="hidden lg:block">
+          <div className="sticky top-[50vh] -translate-y-1/2">
+            <TooltipProvider>
+              <div className="flex flex-col items-center gap-1 rounded-xl border border-border bg-card p-1.5 shadow-sm">
+                <SidebarButton
+                  icon={<FloppyDisk className="size-4" />}
+                  label="저장"
+                  onClick={async () => {
+                    const ok = await profile.saveNow();
+                    if (ok) router.push("/dashboard");
+                  }}
+                />
+                <SidebarButton
+                  icon={<LinkIcon className="size-4" />}
+                  label="공유"
                   onClick={() => {
                     const url = `${SITE_URL}/${profile.profileData.slug || "yourname"}`;
                     navigator.clipboard.writeText(url);
                     toast.success("링크가 복사되었습니다", { description: url });
                   }}
                   disabled={!profile.profileData.slug}
-                >
-                  <LinkIcon className="mr-1 size-3.5" />
-                  공유
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={async () => {
-                    const ok = await profile.saveNow();
-                    if (ok) router.push("/dashboard");
-                  }}
-                  className="h-8 text-xs"
-                >
-                  <FloppyDisk className="mr-1 size-3.5" />
-                  저장
-                </Button>
-              </div>
-              <div className="h-[calc(100vh-11rem)] max-h-[720px] rounded-xl border border-border bg-card shadow-sm">
-                <ProfilePreview
-                  profileData={profile.profileData}
-                  reorderLinks={profile.reorderLinks}
+                />
+                <div className="my-1 h-px w-full bg-border" />
+                <SidebarButton
+                  icon={<ArrowCounterClockwise className="size-4" />}
+                  label="되돌리기"
+                  onClick={profile.undoProfile}
+                  disabled={!profile.canUndo}
+                />
+                <SidebarButton
+                  icon={<ArrowClockwise className="size-4" />}
+                  label="다시 실행"
+                  onClick={profile.redoProfile}
+                  disabled={!profile.canRedo}
+                />
+                <div className="my-1 h-px w-full bg-border" />
+                <SidebarButton
+                  icon={<Trash className="size-4" />}
+                  label="초기화"
+                  onClick={() => setConfirmResetOpen(true)}
+                  variant="destructive"
                 />
               </div>
-            </div>
+            </TooltipProvider>
+          </div>
+        </div>
+
+        {/* Editor */}
+        <div className="min-w-0 w-full max-w-3xl">
+        <div className="mb-4 flex h-8 items-center gap-3">
+          <h1 className="text-lg font-semibold">프로필 편집</h1>
+          <span className="text-xs text-muted-foreground">
+            {profile.saveStatus === "saving" && (
+              <span className="inline-flex items-center gap-1">
+                <CircleNotch className="size-3 animate-spin" />
+                저장 중...
+              </span>
+            )}
+            {profile.saveStatus === "saved" && (
+              <span className="inline-flex items-center gap-1 text-primary">
+                <Check className="size-3" />
+                저장됨
+              </span>
+            )}
+            {profile.saveStatus === "error" && (
+              <span className="inline-flex items-center gap-1 text-destructive">
+                저장 실패
+              </span>
+            )}
+          </span>
+        </div>
+        <div className="rounded-xl border border-border bg-card shadow-sm">
+          <ProfileEditor {...profile} />
+        </div>
+      </div>
+
+        {/* Preview — sticky */}
+        <div className="hidden lg:block lg:flex-1">
+          <div className="sticky top-4">
+            <ProfilePreview
+              profileData={profile.profileData}
+              reorderLinks={profile.reorderLinks}
+            />
           </div>
         </div>
       </div>
@@ -198,18 +191,22 @@ function SidebarButton({
   variant?: "destructive";
 }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={label}
-      className={cn(
-        "flex size-8 cursor-pointer items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-30",
-        variant === "destructive"
-          ? "text-destructive hover:bg-destructive/10"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground",
-      )}
-    >
-      {icon}
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={onClick}
+          disabled={disabled}
+          className={cn(
+            "flex size-8 cursor-pointer items-center justify-center rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-30",
+            variant === "destructive"
+              ? "text-destructive hover:bg-destructive/10"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+          )}
+        >
+          {icon}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
   );
 }
