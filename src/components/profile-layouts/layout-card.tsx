@@ -1,0 +1,44 @@
+"use client";
+
+import { Fire, CursorClick } from "@phosphor-icons/react";
+import { cn } from "@/lib/utils";
+import { ProfileAvatar, ProductImage, PriceTag, type LayoutProps, formatPrice } from "./shared";
+
+export function LayoutCard({ profileData, links }: LayoutProps) {
+  return (
+    <div className="flex flex-col items-center gap-3 px-4 py-6">
+      <ProfileAvatar src={profileData.avatarUrl} nickname={profileData.nickname} />
+      <div className="text-center">
+        <p className="text-base font-bold">{profileData.nickname || "닉네임"}</p>
+        {profileData.bio && <p className="text-xs text-muted-foreground">{profileData.bio}</p>}
+      </div>
+
+      <div className="mt-2 flex w-full flex-col gap-3">
+        {links.map((link) => (
+          <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={cn("group overflow-hidden rounded-xl border border-border transition-colors hover:border-primary/30", !link.enabled && "opacity-40")}>
+            <div className="relative flex h-32 items-center justify-center overflow-hidden">
+              <ProductImage src={link.imageUrl} className="size-full text-sm" />
+              {(link.clicks ?? 0) >= 500 && (
+                <span className="absolute left-2 top-2 flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-2 py-0.5 text-[9px] font-bold text-white">
+                  <Fire className="size-2.5" weight="fill" />인기
+                </span>
+              )}
+            </div>
+            <div className="p-3">
+              <p className="text-sm font-semibold leading-snug">{link.title}</p>
+              <div className="mt-1.5 flex items-baseline gap-1.5">
+                {link.discountRate != null && <span className="text-sm font-bold text-red-500">{link.discountRate}%</span>}
+                {link.price != null && <span className="text-base font-bold">{formatPrice(link.price)}원</span>}
+                {link.originalPrice != null && link.price != null && link.originalPrice > link.price && <span className="text-xs text-muted-foreground line-through">{formatPrice(link.originalPrice)}원</span>}
+              </div>
+              <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>{link.store}</span>
+                {link.clicks != null && link.clicks > 0 && <span className="flex items-center gap-0.5"><CursorClick className="size-2.5" />{link.clicks}</span>}
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}

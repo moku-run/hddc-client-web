@@ -67,6 +67,7 @@ export function ProfileEditor(props: ProfileActions) {
       <hr className="border-border" />
 
       <ThemeEditor
+        pageLayout={props.profileData.pageLayout}
         colorTheme={props.profileData.colorTheme}
         darkMode={props.profileData.darkMode}
         backgroundColor={props.profileData.backgroundColor}
@@ -75,6 +76,7 @@ export function ProfileEditor(props: ProfileActions) {
         customPrimaryColor={props.profileData.customPrimaryColor}
         customSecondaryColor={props.profileData.customSecondaryColor}
         fontFamily={props.profileData.fontFamily}
+        setPageLayout={props.setPageLayout}
         setColorTheme={props.setColorTheme}
         setDarkMode={props.setDarkMode}
         setBackgroundColor={props.setBackgroundColor}

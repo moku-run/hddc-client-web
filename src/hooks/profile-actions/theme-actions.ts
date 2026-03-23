@@ -1,9 +1,13 @@
 import { useCallback } from "react";
-import type { ProfileData, LinkLayout, LinkStyle, LinkRound, FontFamily, HeaderLayout, LinkAnimation, BackgroundTexture, DecoratorType } from "@/lib/profile-types";
+import type { ProfileData, PageLayout, LinkLayout, LinkStyle, LinkRound, FontFamily, HeaderLayout, LinkAnimation, BackgroundTexture, DecoratorType } from "@/lib/profile-types";
 
 type SetWithHistory = (updater: (prev: ProfileData) => ProfileData, immediate?: boolean) => void;
 
 export function useThemeActions(setWithHistory: SetWithHistory) {
+  const setPageLayout = useCallback((layout: PageLayout) => {
+    setWithHistory((prev) => ({ ...prev, pageLayout: layout }), true);
+  }, [setWithHistory]);
+
   const setColorTheme = useCallback(
     (theme: ProfileData["colorTheme"]) => {
       setWithHistory((prev) => ({ ...prev, colorTheme: theme }), true);
@@ -84,6 +88,7 @@ export function useThemeActions(setWithHistory: SetWithHistory) {
   }, [setWithHistory]);
 
   return {
+    setPageLayout,
     setColorTheme,
     setDarkMode,
     setLinkLayout,

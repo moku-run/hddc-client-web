@@ -13,6 +13,8 @@ export const SOCIAL_PLATFORMS = [
 
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
 
+export type PageLayout = "list" | "card" | "grid" | "magazine" | "shop" | "visual";
+
 export type LinkLayout = "list" | "grid-2" | "grid-3";
 
 export type LinkStyle = "none" | "fill" | "shadow" | "glass" | "gradient";
@@ -55,6 +57,13 @@ export interface ProfileLink {
   description: string | null;
   order: number;
   enabled: boolean;
+  /** 상품 특화 필드 (optional — 서버 추가 전 mock) */
+  price?: number | null;
+  originalPrice?: number | null;
+  discountRate?: number | null;
+  store?: string | null;
+  category?: string | null;
+  clicks?: number;
 }
 
 export interface SocialLink {
@@ -74,6 +83,7 @@ export interface ProfileData {
   bio: string;
   links: ProfileLink[];
   socials: SocialLink[];
+  pageLayout: PageLayout;
   linkLayout: LinkLayout;
   linkStyle: LinkStyle;
   linkRound: LinkRound;
@@ -105,6 +115,7 @@ export const DEFAULT_PROFILE: ProfileData = {
   bio: "",
   links: [],
   socials: [],
+  pageLayout: "list",
   linkLayout: "list",
   linkStyle: "fill",
   linkRound: "sm",
