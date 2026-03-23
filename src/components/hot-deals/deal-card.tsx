@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Heart, ChatCircle, Flag, XCircle, Fire, CursorClick } from "@phosphor-icons/react";
+import { IconText } from "@/components/ui/icon-text";
+import { ActionPill } from "@/components/ui/action-pill";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { HotDeal } from "@/lib/hot-deal-types";
@@ -176,27 +178,31 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
               discountRate={deal.discountRate}
             />
 
-            {/* Meta left + pills right */}
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-muted-foreground">
+            {/* Meta + hover action pills */}
+            <div className="group/meta relative flex items-center justify-between overflow-hidden">
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                 {deal.viewCount != null && deal.viewCount > 0 && (
-                  <><CursorClick className="inline size-2.5" />{formatCount(deal.viewCount)} · </>
+                  <><IconText icon={CursorClick}>{formatCount(deal.viewCount)}</IconText> · </>
                 )}
-                <Heart className="inline size-2.5" />{likeCount} · {deal.nickname} · {deal.store && <>{deal.store} · </>}<span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
+                <IconText icon={Heart}>{likeCount}</IconText> · {deal.nickname} · {deal.store && <>{deal.store} · </>}<span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
               </span>
-              <div className="flex items-center gap-1.5">
-                <button
+              <div className="absolute right-0 flex translate-x-full items-center gap-1.5 bg-card pl-2 transition-transform duration-200 ease-out group-hover/meta:translate-x-0">
+                <ActionPill
+                  icon={Heart}
+                  label="좋아요"
+                  active={liked}
+                  activeClassName="bg-red-500 text-white"
+                  hoverClassName="hover:text-red-400"
                   onClick={(e) => { e.preventDefault(); toggleLike(); }}
-                  className={cn("flex size-6 cursor-pointer items-center justify-center rounded-full transition-colors", liked ? "bg-red-50 text-red-500" : "bg-muted text-muted-foreground hover:text-red-500")}
-                >
-                  <Heart className="size-3.5" weight={liked ? "fill" : "regular"} />
-                </button>
-                <button
+                />
+                <ActionPill
+                  icon={XCircle}
+                  label="끝났어요"
+                  active={expired}
+                  activeClassName="bg-orange-500 text-white"
+                  hoverClassName="hover:text-orange-400"
                   onClick={(e) => { e.preventDefault(); toggleExpired(); }}
-                  className={cn("flex size-6 cursor-pointer items-center justify-center rounded-full transition-colors", expired ? "bg-orange-50 text-orange-500" : "bg-muted text-muted-foreground hover:text-orange-500")}
-                >
-                  <XCircle className="size-3.5" weight={expired ? "fill" : "regular"} />
-                </button>
+                />
               </div>
             </div>
           </div>

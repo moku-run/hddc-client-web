@@ -19,8 +19,13 @@ import {
   ArrowLeft, ArrowRight, FloppyDisk, LinkSimple, Heart, Star,
   PencilSimple, Check, X, Warning, DeviceMobile, Desktop,
   Palette, EnvelopeSimple, SignOut,
+  CursorClick, Cursor, HandTap, MouseSimple, HandPointing, Hand, XCircle,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { IconText } from "@/components/ui/icon-text";
+import { ActionPill } from "@/components/ui/action-pill";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -352,6 +357,185 @@ export default function ComponentShowcasePage() {
           </Row>
         </Section>
 
+        {/* ─── ActionPill ─── */}
+        <Section title="ActionPill">
+          <Row label="기본">
+            <ActionPill icon={Heart} label="좋아요" />
+            <ActionPill icon={XCircle} label="끝났어요" />
+            <ActionPill icon={Star} label="즐겨찾기" />
+          </Row>
+          <Row label="Active">
+            <ActionPill icon={Heart} label="좋아요" active activeClassName="bg-red-500 text-white" />
+            <ActionPill icon={XCircle} label="끝났어요" active activeClassName="bg-orange-500 text-white" />
+            <ActionPill icon={Star} label="즐겨찾기" active activeClassName="bg-yellow-500 text-white" />
+          </Row>
+          <Row label="커스텀 색상">
+            <ActionPill icon={Heart} label="좋아요" active activeClassName="bg-pink-500 text-white" />
+            <ActionPill icon={Check} label="완료" active activeClassName="bg-green-500 text-white" />
+            <ActionPill icon={Warning} label="주의" active activeClassName="bg-amber-500 text-white" />
+          </Row>
+        </Section>
+
+        {/* ─── Popover ─── */}
+        <Section title="Popover">
+          <Row label="방향">
+            <Popover>
+              <PopoverTrigger asChild><Button variant="outline" size="sm">위쪽</Button></PopoverTrigger>
+              <PopoverContent side="top" className="w-48 p-3"><p className="text-xs">위쪽 Popover 콘텐츠</p></PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild><Button variant="outline" size="sm">아래쪽</Button></PopoverTrigger>
+              <PopoverContent side="bottom" className="w-48 p-3"><p className="text-xs">아래쪽 Popover 콘텐츠</p></PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild><Button variant="outline" size="sm">왼쪽</Button></PopoverTrigger>
+              <PopoverContent side="left" className="w-48 p-3"><p className="text-xs">왼쪽 Popover 콘텐츠</p></PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild><Button variant="outline" size="sm">오른쪽</Button></PopoverTrigger>
+              <PopoverContent side="right" className="w-48 p-3"><p className="text-xs">오른쪽 Popover 콘텐츠</p></PopoverContent>
+            </Popover>
+          </Row>
+          <Row label="삭제 확인">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive"><Trash className="size-4" /></Button>
+              </PopoverTrigger>
+              <PopoverContent side="bottom" align="center" className="!w-auto flex-row items-center gap-1.5 whitespace-nowrap p-1.5">
+                <button className="rounded bg-destructive px-2.5 py-0.5 text-[9px] font-medium text-white">삭제</button>
+                <button className="rounded bg-muted px-2.5 py-0.5 text-[9px] font-medium text-muted-foreground">취소</button>
+              </PopoverContent>
+            </Popover>
+          </Row>
+          <Row label="메뉴형">
+            <Popover>
+              <PopoverTrigger asChild><Button variant="outline" size="sm">메뉴 열기</Button></PopoverTrigger>
+              <PopoverContent align="start" className="w-40 p-1.5">
+                <div className="flex flex-col">
+                  <button className="rounded-md px-2 py-1.5 text-left text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground">수정</button>
+                  <button className="rounded-md px-2 py-1.5 text-left text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground">공유</button>
+                  <button className="rounded-md px-2 py-1.5 text-left text-[11px] text-destructive hover:bg-destructive/10">삭제</button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </Row>
+          <Row label="폼 입력">
+            <Popover>
+              <PopoverTrigger asChild><Button variant="outline" size="sm">신고하기</Button></PopoverTrigger>
+              <PopoverContent align="start" className="w-56 p-3">
+                <p className="mb-2 text-[11px] font-semibold">신고 사유 입력</p>
+                <textarea placeholder="사유를 입력해주세요" maxLength={100} rows={3} className="w-full resize-none rounded-md border border-input bg-transparent px-2 py-1.5 text-[11px] outline-none placeholder:text-muted-foreground focus:border-primary" />
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[9px] text-muted-foreground">0/100</span>
+                  <button className="rounded-md bg-destructive px-2 py-0.5 text-[10px] font-medium text-white">신고</button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </Row>
+        </Section>
+
+        {/* ─── Tooltip ─── */}
+        <Section title="Tooltip">
+          <TooltipProvider>
+            <Row label="방향">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm">위쪽 (기본)</Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">위쪽 툴팁</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm">아래쪽</Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">아래쪽 툴팁</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm">왼쪽</Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">왼쪽 툴팁</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm">오른쪽</Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">오른쪽 툴팁</TooltipContent>
+              </Tooltip>
+            </Row>
+            <Row label="아이콘 버튼">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon-sm"><Heart className="size-4" /></Button>
+                </TooltipTrigger>
+                <TooltipContent>좋아요</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon-sm"><Trash className="size-4" /></Button>
+                </TooltipTrigger>
+                <TooltipContent>삭제</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon-sm"><PencilSimple className="size-4" /></Button>
+                </TooltipTrigger>
+                <TooltipContent>수정</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon-sm"><FloppyDisk className="size-4" /></Button>
+                </TooltipTrigger>
+                <TooltipContent>저장</TooltipContent>
+              </Tooltip>
+            </Row>
+            <Row label="긴 텍스트">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm">Hover me</Button>
+                </TooltipTrigger>
+                <TooltipContent>이것은 긴 툴팁 텍스트입니다. 최대 너비가 적용됩니다.</TooltipContent>
+              </Tooltip>
+            </Row>
+            <Row label="텍스트 요소">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help text-sm underline decoration-dotted underline-offset-4">클릭수란?</span>
+                </TooltipTrigger>
+                <TooltipContent>해당 딜 링크를 클릭한 횟수입니다</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help text-sm underline decoration-dotted underline-offset-4">끝났어요</span>
+                </TooltipTrigger>
+                <TooltipContent>딜이 종료되었다고 투표합니다. 5표 이상이면 인기 뱃지가 제거됩니다.</TooltipContent>
+              </Tooltip>
+            </Row>
+          </TooltipProvider>
+        </Section>
+
+        {/* ─── Icon + Text ─── */}
+        <Section title="IconText (아이콘+텍스트 정렬)">
+          <Row label="기본">
+            <IconText icon={CursorClick}>330</IconText>
+            <IconText icon={Heart}>634</IconText>
+            <IconText icon={Star}>4.8</IconText>
+          </Row>
+          <Row label="메타 줄 예시">
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <IconText icon={CursorClick}>330</IconText> ·
+              <IconText icon={Heart}>634</IconText> ·
+              HDDC · 쿠팡 · 1일 전
+            </span>
+          </Row>
+          <Row label="크기 비교">
+            <IconText icon={Heart} iconClassName="size-2">size-2</IconText>
+            <IconText icon={Heart}>size-2.5 (기본)</IconText>
+            <IconText icon={Heart} iconClassName="size-3">size-3</IconText>
+            <IconText icon={Heart} iconClassName="size-4">size-4</IconText>
+          </Row>
+        </Section>
+
         {/* ─── Icon Reference ─── */}
         <Section title="Icon Reference (Phosphor)">
           <Row label="Common Icons">
@@ -365,6 +549,22 @@ export default function ComponentShowcasePage() {
                 { icon: LinkSimple, name: "Link" }, { icon: Heart, name: "Heart" },
                 { icon: Star, name: "Star" }, { icon: PencilSimple, name: "Edit" },
                 { icon: Palette, name: "Palette" }, { icon: EnvelopeSimple, name: "Mail" },
+              ].map(({ icon: Icon, name }) => (
+                <div key={name} className="flex flex-col items-center gap-1">
+                  <div className="flex size-8 items-center justify-center rounded-md border border-border">
+                    <Icon className="size-4" />
+                  </div>
+                  <span className="text-[9px] text-muted-foreground">{name}</span>
+                </div>
+              ))}
+            </div>
+          </Row>
+          <Row label="Click / Tap Icons">
+            <div className="grid grid-cols-8 gap-3">
+              {[
+                { icon: CursorClick, name: "CursorClick" }, { icon: Cursor, name: "Cursor" },
+                { icon: HandTap, name: "HandTap" }, { icon: MouseSimple, name: "Mouse" },
+                { icon: HandPointing, name: "HandPoint" }, { icon: Hand, name: "Hand" },
               ].map(({ icon: Icon, name }) => (
                 <div key={name} className="flex flex-col items-center gap-1">
                   <div className="flex size-8 items-center justify-center rounded-md border border-border">

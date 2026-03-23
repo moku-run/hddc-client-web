@@ -31,6 +31,23 @@ function getCurrentUserId(): number | null {
   } catch { return null; }
 }
 
+function DeletePopover({ onDelete }: { onDelete: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-destructive">
+          <Trash className="size-3" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="bottom" align="center" className="!w-auto flex-row items-center gap-1.5 whitespace-nowrap p-1.5">
+        <button onClick={() => { setOpen(false); onDelete(); }} className="cursor-pointer rounded bg-destructive px-2.5 py-0.5 text-[9px] font-medium text-white hover:bg-destructive/80">삭제</button>
+        <button onClick={() => setOpen(false)} className="cursor-pointer rounded bg-muted px-2.5 py-0.5 text-[9px] font-medium text-muted-foreground hover:text-foreground">취소</button>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 interface CommentPanelProps {
   deal: HotDeal;
   open: boolean;
@@ -145,29 +162,24 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
   }
 
   async function handleDeleteComment(commentId: number) {
-    const hasReplies = comments.some((c) => c.parentId === commentId);
     try {
       await deleteComment(deal.id, commentId);
-      if (hasReplies) {
-        // 대댓글이 있으면 내용만 교체 (soft delete)
-        setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, content: "", nickname: "", userId: -1 } : c));
-      } else {
-        setComments((prev) => prev.filter((c) => c.id !== commentId));
-      }
+      setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, content: "", nickname: "", userId: -1 } : c));
     } catch {
       toast.error("댓글 삭제에 실패했습니다");
     }
   }
 
-  if (!open) return null;
-
   return (
     <>
       {/* Backdrop (mobile) */}
-      <div className="fixed inset-0 z-40 bg-black/30 sm:hidden" onClick={onClose} />
+      {open && <div className="fixed inset-0 z-40 bg-black/30 sm:hidden" onClick={onClose} />}
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[420px] flex-col overflow-hidden border-l border-border bg-card shadow-xl">
+      <div className={cn(
+        "fixed right-0 top-0 z-50 flex h-full w-full max-w-[420px] flex-col overflow-hidden border-l border-border bg-card transition-transform duration-500 ease-in-out",
+        open ? "translate-x-0" : "translate-x-full",
+      )}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h4 className="text-sm font-semibold">댓글 {deal.commentCount}</h4>
@@ -235,17 +247,7 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                             답글
                           </button>
                           {isMine && (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <button className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-destructive">
-                                  <Trash className="size-3" />
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent side="bottom" align="center" className="!w-auto flex-row items-center gap-1.5 whitespace-nowrap p-1.5">
-                                <button onClick={() => handleDeleteComment(c.id)} className="cursor-pointer rounded bg-destructive px-2.5 py-0.5 text-[9px] font-medium text-white hover:bg-destructive/80">삭제</button>
-                                <button className="cursor-pointer rounded bg-muted px-2.5 py-0.5 text-[9px] font-medium text-muted-foreground hover:text-foreground">취소</button>
-                              </PopoverContent>
-                            </Popover>
+                            <DeletePopover onDelete={() => handleDeleteComment(c.id)} />
                           )}
                           <ReportPopover targetType="comment" dealId={deal.id} commentId={c.id} />
                         </div>
@@ -258,40 +260,36 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                         {replies.map((r) => {
                           const isReplyMine = currentUserId === r.userId;
                           return (
-                            <div key={r.id} id={`comment-${r.id}`} className="flex items-start gap-2 text-xs">
-                              <div className="flex size-4 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white" style={{ backgroundColor: getAvatarColor(r.nickname) }}>
-                                {r.nickname.charAt(0)}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-baseline gap-1.5">
-                                  <span className="font-semibold">{r.nickname}</span>
-                                  <span className="text-[10px] text-muted-foreground/60" suppressHydrationWarning>{timeAgo(r.createdAt)}</span>
+                            <div key={r.id} id={`comment-${r.id}`}>
+                              {r.userId === -1 ? (
+                                <p className="py-0.5 text-[11px] italic text-muted-foreground/40">삭제된 메시지입니다</p>
+                              ) : (
+                              <div className="flex items-start gap-2 text-xs">
+                                <div className="flex size-4 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white" style={{ backgroundColor: getAvatarColor(r.nickname) }}>
+                                  {r.nickname.charAt(0)}
                                 </div>
-                                <p className="mt-0.5 whitespace-pre-wrap break-all text-muted-foreground">{r.content}</p>
-                                <div className="mt-1 flex items-center gap-2">
-                                  <button
-                                    onClick={() => toggleCommentLike(r.id)}
-                                    className={cn("flex cursor-pointer items-center gap-0.5 text-[10px] transition-colors", r.isLiked ? "text-red-500" : "text-muted-foreground/60 hover:text-red-500")}
-                                  >
-                                    <Heart className="size-3" weight={r.isLiked ? "fill" : "regular"} />
-                                    {r.likeCount > 0 && r.likeCount}
-                                  </button>
-                                  {isReplyMine && (
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <button className="cursor-pointer text-[10px] text-muted-foreground/60 transition-colors hover:text-destructive">
-                                          <Trash className="size-3" />
-                                        </button>
-                                      </PopoverTrigger>
-                                      <PopoverContent side="bottom" align="center" className="!w-auto flex-row items-center gap-1.5 whitespace-nowrap p-1.5">
-                                        <button onClick={() => handleDeleteComment(r.id)} className="cursor-pointer rounded bg-destructive px-2.5 py-0.5 text-[9px] font-medium text-white hover:bg-destructive/80">삭제</button>
-                                        <button className="cursor-pointer rounded bg-muted px-2.5 py-0.5 text-[9px] font-medium text-muted-foreground hover:text-foreground">취소</button>
-                                      </PopoverContent>
-                                    </Popover>
-                                  )}
-                                  <ReportPopover targetType="comment" dealId={deal.id} commentId={r.id} />
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-baseline gap-1.5">
+                                    <span className="font-semibold">{r.nickname}</span>
+                                    <span className="text-[10px] text-muted-foreground/60" suppressHydrationWarning>{timeAgo(r.createdAt)}</span>
+                                  </div>
+                                  <p className="mt-0.5 whitespace-pre-wrap break-all text-muted-foreground">{r.content}</p>
+                                  <div className="mt-1 flex items-center gap-2">
+                                    <button
+                                      onClick={() => toggleCommentLike(r.id)}
+                                      className={cn("flex cursor-pointer items-center gap-0.5 text-[10px] transition-colors", r.isLiked ? "text-red-500" : "text-muted-foreground/60 hover:text-red-500")}
+                                    >
+                                      <Heart className="size-3" weight={r.isLiked ? "fill" : "regular"} />
+                                      {r.likeCount > 0 && r.likeCount}
+                                    </button>
+                                    {isReplyMine && (
+                                      <DeletePopover onDelete={() => handleDeleteComment(r.id)} />
+                                    )}
+                                    <ReportPopover targetType="comment" dealId={deal.id} commentId={r.id} />
+                                  </div>
                                 </div>
                               </div>
+                              )}
                             </div>
                           );
                         })}
