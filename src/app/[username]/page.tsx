@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { isReservedSlug } from "@/lib/reserved-slugs";
 import { profileApi, ApiError } from "@/lib/api";
 import { toProfileData } from "@/hooks/use-profile-data";
-import { ProfilePreviewContent } from "@/components/dashboard/profile-preview-content";
+import { ProductProfile } from "@/components/profile-layouts";
+import { SponsorBanner } from "@/components/sponsor-banner";
 import { FONT_FAMILY_CSS, type ProfileData } from "@/lib/profile-types";
 import { loadFont } from "@/lib/font-loader";
 import { contrastForeground } from "@/lib/color-utils";
@@ -106,11 +107,8 @@ export default function ProfilePage({ params }: Props) {
       style={customStyle}
     >
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col">
-        <ProfilePreviewContent
-          profileData={profileData}
-          variant="mobile"
-          readonly
-        />
+        <ProductProfile profileData={profileData} />
+        <SponsorBanner plan={profileData.plan} className="mt-auto border-t-0" />
       </main>
     </div>
   );

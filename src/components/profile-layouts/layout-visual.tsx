@@ -2,7 +2,7 @@
 
 import { Fire } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { ProfileAvatar, ProductImage, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps, formatPrice } from "./shared";
+import { ProfileAvatar, ProductImage, LinkStats, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps, formatPrice } from "./shared";
 
 export function LayoutVisual({ profileData, links }: LayoutProps) {
   return (
@@ -29,9 +29,12 @@ export function LayoutVisual({ profileData, links }: LayoutProps) {
                 </div>
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-8">
                   <p className="line-clamp-1 text-[10px] font-semibold text-white">{link.title}</p>
-                  <div className="flex items-baseline gap-1">
-                    {link.discountRate != null && <span className="text-[9px] font-bold text-red-400">{link.discountRate}%</span>}
-                    {link.price != null && <span className="text-[10px] font-bold text-white">{formatPrice(link.price)}원</span>}
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-baseline gap-1">
+                      {link.discountRate != null && <span className="text-[9px] font-bold text-red-400">{link.discountRate}%</span>}
+                      {link.price != null && <span className="text-[10px] font-bold text-white">{formatPrice(link.price)}원</span>}
+                    </span>
+                    <LinkStats link={link} iconSize="size-2" className="text-[8px] text-white/70" />
                   </div>
                 </div>
                 {(link.clicks ?? 0) >= 500 && (

@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CursorClick } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { ProfileAvatar, ProductImage, PriceTag, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps } from "./shared";
+import { ProfileAvatar, ProductImage, PriceTag, LinkStats, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps } from "./shared";
 
 export function LayoutShop({ profileData, links }: LayoutProps) {
   const categories = ["전체", ...new Set(links.map((l) => l.category).filter(Boolean))];
@@ -52,11 +51,12 @@ export function LayoutShop({ profileData, links }: LayoutProps) {
                   <ProductImage src={link.imageUrl} className="size-full" textSize="text-sm" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-xs font-semibold leading-snug">{link.title}</p>
+                  <p className="line-clamp-2 min-h-[2.25rem] text-xs font-semibold leading-snug">{link.title}</p>
                   <div className="mt-1"><PriceTag link={link} /></div>
-                  <div className="mt-0.5 flex items-center gap-2 text-[9px] text-muted-foreground">
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                    <LinkStats link={link} className="text-[9px]" />
                     {link.store && <span>{link.store}</span>}
-                    {link.clicks != null && <span className="flex items-center gap-0.5"><CursorClick className="size-2" />{link.clicks}</span>}
+                    {link.category && <span>{link.category}</span>}
                   </div>
                 </div>
               </a>

@@ -1,8 +1,8 @@
 "use client";
 
-import { Fire, CursorClick } from "@phosphor-icons/react";
+import { Fire } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { ProfileAvatar, ProductImage, PriceTag, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps, formatPrice } from "./shared";
+import { ProfileAvatar, ProductImage, PriceTag, LinkStats, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps, formatPrice } from "./shared";
 
 export function LayoutCard({ profileData, links }: LayoutProps) {
   return (
@@ -42,8 +42,8 @@ export function LayoutCard({ profileData, links }: LayoutProps) {
                     {link.originalPrice != null && link.price != null && link.originalPrice > link.price && <span className="text-xs text-muted-foreground line-through">{formatPrice(link.originalPrice)}원</span>}
                   </div>
                   <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span>{link.store}</span>
-                    {link.clicks != null && link.clicks > 0 && <span className="flex items-center gap-0.5"><CursorClick className="size-2.5" />{link.clicks}</span>}
+                    <span>{[link.store, link.category].filter(Boolean).join(" · ") || "\u00A0"}</span>
+                    <LinkStats link={link} className="text-[10px]" />
                   </div>
                 </div>
               </a>

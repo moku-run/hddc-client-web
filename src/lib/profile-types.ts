@@ -66,6 +66,7 @@ export interface ProfileLink {
   store?: string | null;
   category?: string | null;
   clicks?: number;
+  likes?: number;
 }
 
 export interface SocialLink {

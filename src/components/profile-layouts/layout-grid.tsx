@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ProfileAvatar, ProductImage, PriceTag, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps } from "./shared";
+import { ProfileAvatar, ProductImage, PriceTag, LinkStats, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps } from "./shared";
 
 export function LayoutGrid({ profileData, links }: LayoutProps) {
   return (
@@ -31,7 +31,11 @@ export function LayoutGrid({ profileData, links }: LayoutProps) {
                 <div className="p-2">
                   <p className="line-clamp-2 text-[10px] font-semibold leading-tight">{link.title}</p>
                   <div className="mt-1"><PriceTag link={link} /></div>
-                  {link.store && <p className="mt-0.5 text-[8px] text-muted-foreground">{link.store}</p>}
+                  <div className="mt-0.5 flex items-center gap-1 truncate text-[8px] text-muted-foreground">
+                    <LinkStats link={link} iconSize="size-2" className="text-[8px]" />
+                    {link.store && <span>{link.store}</span>}
+                    {link.category && <span>{link.category}</span>}
+                  </div>
                 </div>
               </a>
             ))}

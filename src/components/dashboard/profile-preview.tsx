@@ -62,7 +62,7 @@ export function ProfilePreview({ profileData, reorderLinks }: Props) {
           style={customStyle}
         >
           <PhonePreviewFrame className="w-[345px] shrink-0" slug={profileData.slug} backgroundColor={profileData.backgroundColor}>
-            <ProductProfile profileData={profileData} />
+            <ProductProfile profileData={profileData} preview />
           </PhonePreviewFrame>
         </div>
       ) : (
@@ -72,7 +72,7 @@ export function ProfilePreview({ profileData, reorderLinks }: Props) {
           style={customStyle}
         >
           <BrowserPreviewFrame className="h-full w-full" slug={profileData.slug} backgroundColor={profileData.backgroundColor}>
-            <ProductProfile profileData={profileData} />
+            <ProductProfile profileData={profileData} preview />
           </BrowserPreviewFrame>
         </div>
       )}

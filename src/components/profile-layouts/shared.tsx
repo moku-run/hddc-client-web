@@ -1,6 +1,6 @@
 "use client";
 
-import { Fire, CursorClick, ArrowSquareOut } from "@phosphor-icons/react";
+import { Fire, CursorClick, Heart, ArrowSquareOut } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { R2Image } from "@/components/ui/r2-image";
 import { useEditFocus, type EditSection } from "@/contexts/edit-focus-context";
@@ -110,6 +110,26 @@ export function HotBadge() {
   return (
     <span className="flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-1.5 py-0.5 text-[8px] font-bold text-white">
       <Fire className="size-2" weight="fill" />HOT
+    </span>
+  );
+}
+
+/* ─── Link Stats (clicks + likes) ─── */
+
+export function compactNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}m`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
+  return String(n);
+}
+
+export function LinkStats({ link, iconSize = "size-2.5", className }: { link: ProfileLink; iconSize?: string; className?: string }) {
+  const hasClicks = link.clicks != null && link.clicks > 0;
+  const hasLikes = link.likes != null && link.likes > 0;
+  if (!hasClicks && !hasLikes) return null;
+  return (
+    <span className={cn("flex items-center gap-1.5 text-muted-foreground", className)}>
+      {hasClicks && <span className="flex items-center gap-0.5"><CursorClick className={iconSize} />{compactNumber(link.clicks!)}</span>}
+      {hasLikes && <span className="flex items-center gap-0.5"><Heart className={iconSize} />{compactNumber(link.likes!)}</span>}
     </span>
   );
 }
