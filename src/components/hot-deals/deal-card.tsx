@@ -119,29 +119,22 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
     <div
       id={`deal-${deal.id}`}
       className={cn(
-        "flex rounded-xl border border-border bg-card transition-colors",
+        "flex overflow-hidden rounded-r-xl border border-border bg-card transition-colors",
         deal.isExpired && "opacity-60",
       )}
     >
-      {/* Left: Index strip */}
-      {index != null && (
-        <div className="flex w-8 shrink-0 items-center justify-center rounded-l-xl bg-muted/50 text-sm font-bold text-muted-foreground">
-          {index}
-        </div>
-      )}
-
       {/* Center: Card body */}
       <a
         href={`/r/deals/${deal.id}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="group flex flex-1 gap-3 p-2.5 sm:p-3"
+        className="group flex flex-1 overflow-hidden"
       >
-        {/* Thumbnail */}
-        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-muted sm:h-24 sm:w-28">
+        {/* Thumbnail — flush to card border */}
+        <div className="relative w-28 shrink-0 self-stretch overflow-hidden bg-muted sm:w-32">
           {deal.imageUrl ? (
             <>
-              <div className="flex size-full items-center justify-center bg-foreground text-sm font-bold text-background">핫딜닷쿨</div>
+              <div className="flex size-full items-center justify-center bg-foreground text-base font-bold text-background">핫딜닷쿨</div>
               <img
                 src={deal.imageUrl}
                 alt={deal.title}
@@ -150,23 +143,23 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
               />
             </>
           ) : (
-            <div className="flex size-full items-center justify-center bg-foreground text-sm font-bold text-background">핫딜닷쿨</div>
+            <div className="flex size-full items-center justify-center bg-foreground text-base font-bold text-background">핫딜닷쿨</div>
           )}
           {deal.likeCount >= 30 && expiredCount < 5 && (
-            <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+            <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-2 py-0.5 text-xs font-bold text-white shadow-sm">
               <Fire className="size-3 shrink-0" weight="fill" />
               인기
             </span>
           )}
           {deal.isExpired && (
-            <span className="absolute right-1.5 top-1.5 rounded-full bg-muted-foreground/80 px-2 py-0.5 text-[10px] font-bold text-white">
+            <span className="absolute right-1.5 top-1.5 rounded-full bg-muted-foreground/80 px-2 py-0.5 text-xs font-bold text-white">
               종료
             </span>
           )}
         </div>
 
-        {/* Content */}
-        <div className="flex min-w-0 flex-1 flex-col justify-between">
+        {/* Content — text padding only */}
+        <div className="flex min-w-0 flex-1 flex-col justify-between px-2.5 py-2 sm:px-3 sm:py-2.5">
           <h3 className="line-clamp-2 min-h-[2.75rem] text-base font-semibold leading-snug group-hover:text-primary">
             {deal.title}
           </h3>
@@ -180,11 +173,16 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
 
             {/* Meta + hover action pills */}
             <div className="group/meta relative flex items-center justify-between overflow-hidden">
-              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                {deal.viewCount != null && deal.viewCount > 0 && (
-                  <><IconText icon={CursorClick}>{formatCount(deal.viewCount)}</IconText> · </>
-                )}
-                <IconText icon={Heart}>{likeCount}</IconText> · {deal.nickname} · {deal.store && <>{deal.store} · </>}<span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
+              <span className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  {deal.viewCount != null && deal.viewCount > 0 && (
+                    <IconText icon={CursorClick}>{formatCount(deal.viewCount)}</IconText>
+                  )}
+                  <IconText icon={Heart}>{likeCount}</IconText>
+                </span>
+              </span>
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                {deal.nickname}{deal.store && <> · {deal.store}</>} · <span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
               </span>
               <div className="absolute right-0 flex translate-x-full items-center gap-1.5 bg-card pl-2 transition-transform duration-200 ease-out group-hover/meta:translate-x-0">
                 <ActionPill
@@ -213,13 +211,12 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
       <button
         onClick={toggleComments}
         className={cn(
-          "flex w-10 shrink-0 flex-col items-center justify-center gap-1 border-l border-border transition-colors",
-          index != null ? "" : "rounded-r-xl",
+          "flex w-10 shrink-0 flex-col items-center justify-center gap-1 rounded-r-xl border-l border-border transition-colors",
           commentsOpen ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground",
         )}
       >
         <ChatCircle className="size-4" weight={commentsOpen ? "fill" : "regular"} />
-        <span className="text-[9px] font-medium">{deal.commentCount}</span>
+        <span className="text-xs font-medium">{deal.commentCount}</span>
       </button>
 
       <CommentPanel deal={deal} open={commentsOpen} onClose={toggleComments} />

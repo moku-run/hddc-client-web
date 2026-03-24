@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ProfileAvatar, ProductImage, PriceTag, LinkStats, HotBadge, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps, formatPrice } from "./shared";
+import { ProfileAvatar, ProductImage, PriceTag, LinkStats, HotBadge, BackgroundBanner, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, handleLinkClick, type LayoutProps, formatPrice } from "./shared";
 
 export function LayoutCard({ profileData, links }: LayoutProps) {
   return (
@@ -11,11 +11,11 @@ export function LayoutCard({ profileData, links }: LayoutProps) {
       <div className="flex flex-col items-center gap-2 px-4 -mt-8">
         <ProfileAvatar src={profileData.avatarUrl} nickname={profileData.nickname} />
         <HighlightWrapper section="nickname" className="px-3">
-          <p className="text-base font-bold">{profileData.nickname || "닉네임"}</p>
+          <p className="text-lg font-bold">{profileData.nickname || "닉네임"}</p>
         </HighlightWrapper>
         {profileData.bio && (
           <HighlightWrapper section="bio" className="px-3">
-            <p className="whitespace-pre-wrap text-xs opacity-60">{profileData.bio}</p>
+            <p className="whitespace-pre-wrap text-sm opacity-60">{profileData.bio}</p>
           </HighlightWrapper>
         )}
       </div>
@@ -24,7 +24,7 @@ export function LayoutCard({ profileData, links }: LayoutProps) {
         <HighlightWrapper section="links">
           <div className="flex flex-col gap-3">
             {links.map((link) => (
-              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={cn("group overflow-hidden border border-border transition-colors hover:border-primary/30", getLinkRoundClass(profileData.linkRound), !link.enabled && "opacity-40")} style={getLinkBorderStyle(profileData)}>
+              <a key={link.id} href={link.url} onClick={(e) => handleLinkClick(e, link)} target="_blank" rel="noopener noreferrer" className={cn("group overflow-hidden border border-border transition-colors hover:border-primary/30", getLinkRoundClass(profileData.linkRound), !link.enabled && "opacity-40")} style={getLinkBorderStyle(profileData)}>
                 <div className="relative flex h-32 items-center justify-center overflow-hidden">
                   <ProductImage src={link.imageUrl} className="size-full" textSize="text-base" />
                   {(link.likes ?? 0) >= 500 && (
@@ -32,19 +32,19 @@ export function LayoutCard({ profileData, links }: LayoutProps) {
                   )}
                 </div>
                 <div className="p-3">
-                  <p className={cn("text-sm font-semibold leading-snug", !link.title && "opacity-40")}>{link.title || "상품명을 입력하세요"}</p>
+                  <p className={cn("text-base font-semibold leading-snug", !link.title && "opacity-40")}>{link.title || "상품명을 입력하세요"}</p>
                   {link.price != null ? (
                     <div className="mt-1.5 flex items-baseline gap-1.5">
-                      {link.discountRate != null && <span className="text-sm font-bold text-red-500">{link.discountRate}%</span>}
-                      <span className="text-base font-bold">{formatPrice(link.price)}원</span>
-                      {link.originalPrice != null && link.originalPrice > link.price && <span className="text-xs opacity-50 line-through">{formatPrice(link.originalPrice)}원</span>}
+                      {link.discountRate != null && <span className="text-base font-bold text-red-500">{link.discountRate}%</span>}
+                      <span className="text-lg font-bold">{formatPrice(link.price)}원</span>
+                      {link.originalPrice != null && link.originalPrice > link.price && <span className="text-sm opacity-50 line-through">{formatPrice(link.originalPrice)}원</span>}
                     </div>
                   ) : (
-                    <p className="mt-1.5 text-xs opacity-30">가격 미입력</p>
+                    <p className="mt-1.5 text-sm opacity-30">가격 미입력</p>
                   )}
-                  <div className="mt-1 flex items-center justify-between text-[10px] opacity-50">
+                  <div className="mt-1 flex items-center justify-between text-xs opacity-50">
                     <span>{[link.store, link.category].filter(Boolean).join(" · ") || "\u00A0"}</span>
-                    <LinkStats link={link} className="text-[10px]" />
+                    <LinkStats link={link} className="text-xs" />
                   </div>
                 </div>
               </a>

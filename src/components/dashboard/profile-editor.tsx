@@ -61,6 +61,7 @@ export function ProfileEditor(props: ProfileActions) {
         setBackgroundTexture={props.setBackgroundTexture}
         setCustomColors={props.setCustomColors}
         setFontFamily={props.setFontFamily}
+        setLinkBorderColor={props.setLinkBorderColor}
       />
 
       <hr className="border-border" />

@@ -36,7 +36,7 @@ export function HighlightWrapper({
 /* ─── Profile Avatar — 이미지 없으면 "핫딜닷쿨" ─── */
 
 export function ProfileAvatar({ src, nickname, size = "size-16" }: { src: string | null; nickname: string; size?: string }) {
-  const textSize = size === "size-10" ? "text-[8px]" : size === "size-12" ? "text-[9px]" : size === "size-14" ? "text-[10px]" : "text-xs";
+  const textSize = size === "size-10" ? "text-[9px]" : size === "size-12" ? "text-[10px]" : size === "size-14" ? "text-xs" : "text-sm";
   return (
     <HighlightWrapper section="avatar" className="rounded-full">
       <div className={cn("relative rounded-full", size)}>
@@ -75,7 +75,7 @@ export function BackgroundBanner({ src, className }: { src: string | null; class
 
 /* ─── Product Image — 이미지 없으면 "핫딜닷쿨" ─── */
 
-export function ProductImage({ src, className, textSize = "text-[8px]" }: { src: string | null; className?: string; textSize?: string }) {
+export function ProductImage({ src, className, textSize = "text-[9px]" }: { src: string | null; className?: string; textSize?: string }) {
   return (
     <div className={cn("relative flex items-center justify-center bg-foreground font-bold text-background", textSize, className)}>
       핫딜닷쿨
@@ -99,16 +99,16 @@ export function PriceTag({ link }: { link: ProfileLink }) {
   if (!price) return null;
   return (
     <span className="flex flex-wrap items-baseline gap-x-1">
-      {discount != null && <span className="text-[10px] font-bold text-red-500">{discount}%</span>}
-      <span className="text-xs font-bold">{formatPrice(price)}원</span>
-      {originalPrice != null && originalPrice > price && <span className="text-[9px] opacity-50 line-through">{formatPrice(originalPrice)}원</span>}
+      {discount != null && <span className="text-xs font-bold text-red-500">{discount}%</span>}
+      <span className="text-sm font-bold">{formatPrice(price)}원</span>
+      {originalPrice != null && originalPrice > price && <span className="text-[10px] opacity-50 line-through">{formatPrice(originalPrice)}원</span>}
     </span>
   );
 }
 
 export function HotBadge({ className }: { className?: string }) {
   return (
-    <span className={cn("flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-1.5 py-0.5 text-[8px] font-bold text-white", className)}>
+    <span className={cn("flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white", className)}>
       <Fire className="size-2" weight="fill" />인기
     </span>
   );
@@ -122,7 +122,7 @@ export function compactNumber(n: number): string {
   return String(n);
 }
 
-export function LinkStats({ link, iconSize = "size-2.5", className }: { link: ProfileLink; iconSize?: string; className?: string }) {
+export function LinkStats({ link, iconSize = "size-3", className }: { link: ProfileLink; iconSize?: string; className?: string }) {
   if (link.clicks == null && link.likes == null) return null;
   return (
     <span className={cn("flex items-center gap-1.5 opacity-85", className)}>
@@ -154,6 +154,17 @@ export function getLinkBorderStyle(profileData: ProfileData): React.CSSPropertie
     case "thick": style.borderWidth = "3px"; break;
   }
   return style;
+}
+
+/* ─── Link Click Handler ─── */
+
+export function handleLinkClick(e: React.MouseEvent, link: ProfileLink) {
+  e.preventDefault();
+  // fire-and-forget: 서버에 클릭 기록
+  if (link.id > 0) {
+    import("@/lib/api").then(({ profileApi }) => profileApi.trackClick(link.id));
+  }
+  if (link.url) window.open(link.url, "_blank", "noopener,noreferrer");
 }
 
 export interface LayoutProps {

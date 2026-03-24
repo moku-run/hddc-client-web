@@ -6,7 +6,7 @@ import { type ColorTheme } from "@/hooks/use-color-theme";
 import { Sun, Moon, Palette } from "@phosphor-icons/react";
 import { FONT_FAMILY_LABELS, FONT_FAMILY_CSS, type FontFamily, type BackgroundTexture } from "@/lib/profile-types";
 import { autoSecondary } from "@/lib/color-utils";
-import { PRESET_THEMES, THEME_COLORS, THEME_LABELS, BG_PALETTE, needsSwatchBorder } from "@/lib/theme-constants";
+import { PRESET_THEMES, THEME_COLORS, THEME_LABELS, THEME_PRESET_CONFIG, BG_PALETTE, needsSwatchBorder } from "@/lib/theme-constants";
 import { useSectionFocus } from "@/contexts/edit-focus-context";
 import { cn } from "@/lib/utils";
 import {
@@ -56,12 +56,13 @@ interface Props {
   setBackgroundTexture: (texture: BackgroundTexture | null) => void;
   setCustomColors: (primary: string, secondary: string) => void;
   setFontFamily: (font: FontFamily) => void;
+  setLinkBorderColor: (color: string | null) => void;
 }
 
 export function ThemeEditor({
   colorTheme, darkMode, backgroundColor, fontColor, backgroundTexture,
   customPrimaryColor, customSecondaryColor, fontFamily,
-  setColorTheme, setDarkMode, setBackgroundColor, setFontColor, setBackgroundTexture, setCustomColors, setFontFamily,
+  setColorTheme, setDarkMode, setBackgroundColor, setFontColor, setBackgroundTexture, setCustomColors, setFontFamily, setLinkBorderColor,
 }: Props) {
   const sectionFocus = useSectionFocus("theme");
 
@@ -87,7 +88,13 @@ export function ThemeEditor({
               key={theme}
               variant="ghost"
               aria-expanded={colorTheme === theme}
-              onClick={() => setColorTheme(theme)}
+              onClick={() => {
+                setColorTheme(theme);
+                const cfg = THEME_PRESET_CONFIG[theme];
+                setBackgroundColor(cfg.backgroundColor);
+                setFontColor(cfg.fontColor);
+                setLinkBorderColor(cfg.linkBorderColor);
+              }}
               aria-label={THEME_LABELS[theme]}
               className="!h-auto flex flex-col items-center gap-1 rounded-lg p-2"
             >

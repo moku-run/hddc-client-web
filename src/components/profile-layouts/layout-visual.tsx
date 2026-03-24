@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ProfileAvatar, ProductImage, LinkStats, HotBadge, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, type LayoutProps, formatPrice } from "./shared";
+import { ProfileAvatar, ProductImage, LinkStats, HotBadge, HighlightWrapper, getLinkRoundClass, getLinkBorderStyle, handleLinkClick, type LayoutProps, formatPrice } from "./shared";
 
 export function LayoutVisual({ profileData, links }: LayoutProps) {
   return (
@@ -10,9 +10,9 @@ export function LayoutVisual({ profileData, links }: LayoutProps) {
         <ProfileAvatar src={profileData.avatarUrl} nickname={profileData.nickname} size="size-12" />
         <div>
           <HighlightWrapper section="nickname">
-            <p className="text-sm font-bold">{profileData.nickname || "닉네임"}</p>
+            <p className="text-base font-bold">{profileData.nickname || "닉네임"}</p>
           </HighlightWrapper>
-          <p className="text-[10px] opacity-60">@{profileData.slug || "username"} · 핫딜상품 {links.length}개</p>
+          <p className="text-xs opacity-60">@{profileData.slug || "username"} · 핫딜상품 {links.length}개</p>
         </div>
       </div>
 
@@ -22,18 +22,18 @@ export function LayoutVisual({ profileData, links }: LayoutProps) {
           {links.map((link, i) => {
             const tall = i % 3 === 0;
             return (
-              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={cn("group relative overflow-hidden border border-border", getLinkRoundClass(profileData.linkRound), !link.enabled && "opacity-40")} style={getLinkBorderStyle(profileData)}>
+              <a key={link.id} href={link.url} onClick={(e) => handleLinkClick(e, link)} target="_blank" rel="noopener noreferrer" className={cn("group relative overflow-hidden border border-border", getLinkRoundClass(profileData.linkRound), !link.enabled && "opacity-40")} style={getLinkBorderStyle(profileData)}>
                 <div className={cn("relative flex items-center justify-center overflow-hidden", tall ? "h-48" : "h-32")}>
-                  <ProductImage src={link.imageUrl} className="size-full" textSize="text-sm" />
+                  <ProductImage src={link.imageUrl} className="size-full" textSize="text-base" />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-8">
-                  <p className={cn("line-clamp-1 text-[10px] font-semibold text-white", !link.title && "opacity-40")}>{link.title || "상품명"}</p>
+                  <p className={cn("line-clamp-1 text-xs font-semibold text-white", !link.title && "opacity-40")}>{link.title || "상품명"}</p>
                   <div className="flex items-center justify-between">
                     <span className="flex items-baseline gap-1">
-                      {link.discountRate != null && <span className="text-[9px] font-bold text-red-400">{link.discountRate}%</span>}
-                      {link.price != null && <span className="text-[10px] font-bold text-white">{formatPrice(link.price)}원</span>}
+                      {link.discountRate != null && <span className="text-[10px] font-bold text-red-400">{link.discountRate}%</span>}
+                      {link.price != null && <span className="text-xs font-bold text-white">{formatPrice(link.price)}원</span>}
                     </span>
-                    <LinkStats link={link} iconSize="size-2" className="text-[8px] text-white/70" />
+                    <LinkStats link={link} iconSize="size-2.5" className="text-[9px] text-white/70" />
                   </div>
                 </div>
                 {(link.likes ?? 0) >= 500 && (

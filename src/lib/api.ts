@@ -375,4 +375,9 @@ export const profileApi = {
     });
   },
 
+  /** 공개 프로필 링크 클릭 트래킹 — 인증 불요 */
+  trackClick(linkId: number) {
+    return fetch(`/api/profiles/links/${linkId}/click`, { method: "POST" }).catch(() => {});
+  },
+
 };
