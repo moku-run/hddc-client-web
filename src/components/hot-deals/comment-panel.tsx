@@ -172,13 +172,20 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
 
   return (
     <>
-      {/* Backdrop (mobile) */}
-      {open && <div className="fixed inset-0 z-40 bg-black/30 sm:hidden" onClick={onClose} />}
+      {/* Backdrop */}
+      {open && <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />}
 
-      {/* Panel */}
+      {/* Panel — mobile: bottom sheet / desktop: right slide */}
       <div className={cn(
-        "fixed right-0 top-0 z-50 flex h-full w-full max-w-[420px] flex-col overflow-hidden border-l border-border bg-card transition-transform duration-500 ease-in-out",
-        open ? "translate-x-0" : "translate-x-full",
+        "fixed z-50 flex flex-col overflow-hidden border-border bg-card transition-transform duration-300 ease-in-out",
+        // Mobile: bottom sheet
+        "inset-x-0 bottom-0 max-h-[55vh] rounded-t-2xl border-t",
+        // Desktop: right panel
+        "sm:inset-x-auto sm:right-0 sm:top-0 sm:bottom-0 sm:h-full sm:max-h-full sm:w-full sm:max-w-[420px] sm:rounded-t-none sm:border-l sm:border-t-0",
+        // Transform
+        open
+          ? "translate-y-0 sm:translate-x-0"
+          : "translate-y-full sm:translate-y-0 sm:translate-x-full",
       )}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
@@ -332,15 +339,15 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
 
         {/* Bottom input — root comment only (replies use inline input) */}
         {!replyTo && (
-          <div className="animate-in slide-in-from-bottom-full duration-300 ease-out border-t border-border px-4 py-3">
+          <div className="animate-in slide-in-from-bottom-full duration-300 ease-out border-t border-border px-4 py-2 sm:py-3">
             {isLoggedIn ? (
               <div className="flex items-end gap-2">
                 <textarea
                   placeholder="댓글을 입력하세요..." value={commentText} maxLength={1000}
                   onChange={(e) => setCommentText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submitComment(); } }}
-                  rows={4}
-                  className="max-h-32 flex-1 resize-none rounded-md border border-input bg-transparent px-3 py-2 text-xs outline-none scrollbar-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
+                  rows={2}
+                  className="max-h-20 flex-1 resize-none rounded-md border border-input bg-transparent px-3 py-1.5 text-xs outline-none scrollbar-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30 sm:max-h-32 sm:py-2"
                 />
                 <button onClick={submitComment} disabled={!commentText.trim()} className="flex size-8 cursor-pointer items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/80 disabled:opacity-40">
                   <PaperPlaneTilt className="size-3.5" />

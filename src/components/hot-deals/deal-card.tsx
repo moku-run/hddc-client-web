@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Heart, ChatCircle, Flag, XCircle, Fire, CursorClick } from "@phosphor-icons/react";
+import { Heart, ChatCircle, XCircle, Fire, CursorClick } from "@phosphor-icons/react";
 import { IconText } from "@/components/ui/icon-text";
-import { ActionPill } from "@/components/ui/action-pill";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { HotDeal } from "@/lib/hot-deal-types";
 import { likeDeal, unlikeDeal, voteExpired, unvoteExpired } from "@/lib/hot-deal-api";
-import { ReportPopover } from "./report-popover";
 import { CommentPanel } from "./comment-panel";
 import { AuthModal } from "@/components/auth/auth-modal";
 
@@ -119,16 +117,16 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
     <div
       id={`deal-${deal.id}`}
       className={cn(
-        "flex overflow-hidden rounded-r-xl border border-border bg-card transition-colors",
+        "overflow-hidden rounded-xl border border-border bg-card transition-colors",
         deal.isExpired && "opacity-60",
       )}
     >
-      {/* Center: Card body */}
+      {/* Card body */}
       <a
         href={`/r/deals/${deal.id}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="group flex flex-1 overflow-hidden"
+        className="group flex overflow-hidden"
       >
         {/* Thumbnail — flush to card border */}
         <div className="relative w-28 shrink-0 self-stretch overflow-hidden bg-muted sm:w-32">
@@ -171,53 +169,45 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
               discountRate={deal.discountRate}
             />
 
-            {/* Meta + hover action pills */}
-            <div className="group/meta relative flex items-center justify-between overflow-hidden">
-              <span className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  {deal.viewCount != null && deal.viewCount > 0 && (
-                    <IconText icon={CursorClick}>{formatCount(deal.viewCount)}</IconText>
-                  )}
-                  <IconText icon={Heart}>{likeCount}</IconText>
-                </span>
+            {/* Meta */}
+            <span className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                {deal.viewCount != null && deal.viewCount > 0 && (
+                  <IconText icon={CursorClick}>{formatCount(deal.viewCount)}</IconText>
+                )}
+                <IconText icon={Heart}>{likeCount}</IconText>
               </span>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
                 {deal.nickname}{deal.store && <> · {deal.store}</>} · <span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
               </span>
-              <div className="absolute right-0 flex translate-x-full items-center gap-1.5 bg-card pl-2 transition-transform duration-200 ease-out group-hover/meta:translate-x-0">
-                <ActionPill
-                  icon={Heart}
-                  label="좋아요"
-                  active={liked}
-                  activeClassName="bg-red-500 text-white"
-                  hoverClassName="hover:text-red-400"
-                  onClick={(e) => { e.preventDefault(); toggleLike(); }}
-                />
-                <ActionPill
-                  icon={XCircle}
-                  label="끝났어요"
-                  active={expired}
-                  activeClassName="bg-orange-500 text-white"
-                  hoverClassName="hover:text-orange-400"
-                  onClick={(e) => { e.preventDefault(); toggleExpired(); }}
-                />
-              </div>
-            </div>
+            </span>
           </div>
         </div>
       </a>
 
-      {/* Right: Comment strip */}
-      <button
-        onClick={toggleComments}
-        className={cn(
-          "flex w-10 shrink-0 flex-col items-center justify-center gap-1 rounded-r-xl border-l border-border transition-colors",
-          commentsOpen ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-        )}
-      >
-        <ChatCircle className="size-4" weight={commentsOpen ? "fill" : "regular"} />
-        <span className="text-xs font-medium">{deal.commentCount}</span>
-      </button>
+      {/* Bottom action bar */}
+      <div className="flex items-center border-t border-border">
+        <button
+          onClick={toggleLike}
+          className={cn("flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors", liked ? "text-red-500" : "text-muted-foreground")}
+        >
+          <Heart className="size-4" weight={liked ? "fill" : "regular"} />좋아요
+        </button>
+        <div className="h-4 w-px bg-border" />
+        <button
+          onClick={toggleExpired}
+          className={cn("flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors", expired ? "text-orange-500" : "text-muted-foreground")}
+        >
+          <XCircle className="size-4" weight={expired ? "fill" : "regular"} />끝났어요
+        </button>
+        <div className="h-4 w-px bg-border" />
+        <button
+          onClick={toggleComments}
+          className={cn("flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors", commentsOpen ? "text-primary" : "text-muted-foreground")}
+        >
+          <ChatCircle className="size-4" weight={commentsOpen ? "fill" : "regular"} />{deal.commentCount}
+        </button>
+      </div>
 
       <CommentPanel deal={deal} open={commentsOpen} onClose={toggleComments} />
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
