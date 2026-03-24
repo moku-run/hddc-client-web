@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Heart, ChatCircle, XCircle, Fire, CursorClick } from "@phosphor-icons/react";
 import { IconText } from "@/components/ui/icon-text";
+import { ActionPill } from "@/components/ui/action-pill";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { HotDeal } from "@/lib/hot-deal-types";
@@ -117,7 +118,9 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
     <div
       id={`deal-${deal.id}`}
       className={cn(
-        "overflow-hidden rounded-xl border border-border bg-card transition-colors",
+        "relative overflow-hidden bg-card shadow-md transition-colors",
+        // Mobile: rounded-xl (bottom bar), Desktop: rounded-r-xl (right strip) + right padding for strip
+        "rounded-xl sm:min-h-24 sm:rounded-r-xl sm:rounded-l-none sm:pr-10",
         deal.isExpired && "opacity-60",
       )}
     >
@@ -129,7 +132,7 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
         className="group flex overflow-hidden"
       >
         {/* Thumbnail — flush to card border */}
-        <div className="relative w-28 shrink-0 self-stretch overflow-hidden bg-muted sm:w-32">
+        <div className="relative w-28 shrink-0 self-stretch overflow-hidden bg-muted sm:w-24">
           {deal.imageUrl ? (
             <>
               <div className="flex size-full items-center justify-center bg-foreground text-base font-bold text-background">핫딜닷쿨</div>
@@ -158,7 +161,7 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
 
         {/* Content — text padding only */}
         <div className="flex min-w-0 flex-1 flex-col justify-between px-2.5 py-2 sm:px-3 sm:py-2.5">
-          <h3 className="line-clamp-2 min-h-[2.75rem] text-base font-semibold leading-snug group-hover:text-primary">
+          <h3 className="truncate text-base font-semibold leading-snug group-hover:text-primary sm:truncate sm:min-h-0">
             {deal.title}
           </h3>
 
@@ -169,24 +172,43 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
               discountRate={deal.discountRate}
             />
 
-            {/* Meta */}
-            <span className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
+            {/* Meta + desktop hover action pills */}
+            <div className="group/meta relative flex items-center justify-between overflow-hidden">
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 {deal.viewCount != null && deal.viewCount > 0 && (
                   <IconText icon={CursorClick}>{formatCount(deal.viewCount)}</IconText>
                 )}
                 <IconText icon={Heart}>{likeCount}</IconText>
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 {deal.nickname}{deal.store && <> · {deal.store}</>} · <span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
               </span>
-            </span>
+              {/* Desktop hover pills */}
+              <div className="absolute right-0 hidden translate-x-full items-center gap-1.5 bg-card pl-2 transition-transform duration-200 ease-out group-hover/meta:translate-x-0 sm:flex">
+                <ActionPill
+                  icon={Heart}
+                  label="좋아요"
+                  active={liked}
+                  activeClassName="bg-red-500 text-white"
+                  hoverClassName="hover:text-red-400"
+                  onClick={(e) => { e.preventDefault(); toggleLike(); }}
+                />
+                <ActionPill
+                  icon={XCircle}
+                  label="끝났어요"
+                  active={expired}
+                  activeClassName="bg-orange-500 text-white"
+                  hoverClassName="hover:text-orange-400"
+                  onClick={(e) => { e.preventDefault(); toggleExpired(); }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </a>
 
-      {/* Bottom action bar */}
-      <div className="flex items-center border-t border-border">
+      {/* Mobile: Bottom action bar */}
+      <div className="flex items-center border-t border-border sm:hidden">
         <button
           onClick={toggleLike}
           className={cn("flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors", liked ? "text-red-500" : "text-muted-foreground")}
@@ -208,6 +230,18 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
           <ChatCircle className="size-4" weight={commentsOpen ? "fill" : "regular"} />{deal.commentCount}
         </button>
       </div>
+
+      {/* Desktop: Right comment strip */}
+      <button
+        onClick={toggleComments}
+        className={cn(
+          "absolute right-0 top-0 hidden h-full w-10 shrink-0 flex-col items-center justify-center gap-1 rounded-r-xl border-l border-border transition-colors sm:flex",
+          commentsOpen ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+        )}
+      >
+        <ChatCircle className="size-4" weight={commentsOpen ? "fill" : "regular"} />
+        <span className="text-xs font-medium">{deal.commentCount}</span>
+      </button>
 
       <CommentPanel deal={deal} open={commentsOpen} onClose={toggleComments} />
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
