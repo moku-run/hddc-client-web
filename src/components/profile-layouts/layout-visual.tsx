@@ -27,7 +27,7 @@ export function LayoutVisual({ profileData, links }: LayoutProps) {
                   <ProductImage src={link.imageUrl} className="size-full" textSize="text-sm" />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-8">
-                  <p className="line-clamp-1 text-[10px] font-semibold text-white">{link.title}</p>
+                  <p className={cn("line-clamp-1 text-[10px] font-semibold text-white", !link.title && "opacity-40")}>{link.title || "상품명"}</p>
                   <div className="flex items-center justify-between">
                     <span className="flex items-baseline gap-1">
                       {link.discountRate != null && <span className="text-[9px] font-bold text-red-400">{link.discountRate}%</span>}

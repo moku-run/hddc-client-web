@@ -33,8 +33,8 @@ export function LayoutList({ profileData, links }: LayoutProps) {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold">{link.title}</p>
-                  <PriceTag link={link} />
+                  <p className={cn("truncate text-xs font-semibold", !link.title && "opacity-40")}>{link.title || "상품명을 입력하세요"}</p>
+                  {link.price != null ? <PriceTag link={link} /> : <p className="text-[10px] opacity-30">가격 미입력</p>}
                   <div className="mt-0.5 flex items-center gap-1.5 text-[9px] opacity-50">
                     <LinkStats link={link} className="text-[9px]" />
                     {link.store && <span>{link.store}</span>}

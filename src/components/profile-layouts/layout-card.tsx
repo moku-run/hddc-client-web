@@ -32,12 +32,16 @@ export function LayoutCard({ profileData, links }: LayoutProps) {
                   )}
                 </div>
                 <div className="p-3">
-                  <p className="text-sm font-semibold leading-snug">{link.title}</p>
-                  <div className="mt-1.5 flex items-baseline gap-1.5">
-                    {link.discountRate != null && <span className="text-sm font-bold text-red-500">{link.discountRate}%</span>}
-                    {link.price != null && <span className="text-base font-bold">{formatPrice(link.price)}원</span>}
-                    {link.originalPrice != null && link.price != null && link.originalPrice > link.price && <span className="text-xs opacity-50 line-through">{formatPrice(link.originalPrice)}원</span>}
-                  </div>
+                  <p className={cn("text-sm font-semibold leading-snug", !link.title && "opacity-40")}>{link.title || "상품명을 입력하세요"}</p>
+                  {link.price != null ? (
+                    <div className="mt-1.5 flex items-baseline gap-1.5">
+                      {link.discountRate != null && <span className="text-sm font-bold text-red-500">{link.discountRate}%</span>}
+                      <span className="text-base font-bold">{formatPrice(link.price)}원</span>
+                      {link.originalPrice != null && link.originalPrice > link.price && <span className="text-xs opacity-50 line-through">{formatPrice(link.originalPrice)}원</span>}
+                    </div>
+                  ) : (
+                    <p className="mt-1.5 text-xs opacity-30">가격 미입력</p>
+                  )}
                   <div className="mt-1 flex items-center justify-between text-[10px] opacity-50">
                     <span>{[link.store, link.category].filter(Boolean).join(" · ") || "\u00A0"}</span>
                     <LinkStats link={link} className="text-[10px]" />

@@ -145,14 +145,14 @@ export function LinkListEditor({ links, addLink, updateLink, removeLink, toggleL
                     </div>
                     <div className="flex flex-1 flex-col gap-1.5">
                       <Input
-                        placeholder="상품명"
+                        placeholder="상품명 (필수)"
                         value={link.title}
                         onChange={(e) => updateLink(link.id, { title: e.target.value.slice(0, 40) })}
-                        className="h-7 text-sm font-medium"
+                        className={cn("h-7 text-sm font-medium", !link.title && "border-destructive/50")}
                         maxLength={40}
                       />
                       <Input
-                        placeholder="https://..."
+                        placeholder="https://... (필수)"
                         type="url"
                         value={link.url}
                         onChange={(e) => updateLink(link.id, { url: e.target.value })}
@@ -160,7 +160,7 @@ export function LinkListEditor({ links, addLink, updateLink, removeLink, toggleL
                           const normalized = normalizeUrl(e.target.value);
                           if (normalized !== e.target.value) updateLink(link.id, { url: normalized });
                         }}
-                        className={cn("h-7 text-xs", link.url && validateUrl(link.url) && "border-destructive")}
+                        className={cn("h-7 text-xs", !link.url ? "border-destructive/50" : link.url && validateUrl(link.url) && "border-destructive")}
                       />
                       {link.url && validateUrl(link.url) && (
                         <p className="text-[9px] text-destructive">{validateUrl(link.url)}</p>

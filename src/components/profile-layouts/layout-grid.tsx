@@ -32,8 +32,8 @@ export function LayoutGrid({ profileData, links }: LayoutProps) {
                   )}
                 </div>
                 <div className="p-2">
-                  <p className="line-clamp-2 text-[10px] font-semibold leading-tight">{link.title}</p>
-                  <div className="mt-1"><PriceTag link={link} /></div>
+                  <p className={cn("line-clamp-2 text-[10px] font-semibold leading-tight", !link.title && "opacity-40")}>{link.title || "상품명"}</p>
+                  <div className="mt-1">{link.price != null ? <PriceTag link={link} /> : <span className="text-[8px] opacity-30">가격 미입력</span>}</div>
                   <div className="mt-0.5 flex items-center gap-1 truncate text-[8px] opacity-50">
                     <LinkStats link={link} iconSize="size-2" className="text-[8px]" />
                     {link.store && <span>{link.store}</span>}

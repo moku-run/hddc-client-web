@@ -10,12 +10,17 @@ import { EditFocusProvider } from "@/contexts/edit-focus-context";
 import { Button } from "@/components/ui/button";
 import {
   FloppyDisk, Check, CircleNotch, Link as LinkIcon,
-  ArrowCounterClockwise, ArrowClockwise, Trash,
+  ArrowCounterClockwise, ArrowClockwise, Trash, ArrowLeft,
 } from "@phosphor-icons/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { AuthModal } from "@/components/auth/auth-modal";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://hotdeal.cool";
@@ -24,6 +29,7 @@ export default function ProfileEditPage() {
   const router = useRouter();
   const profile = useProfileData();
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [confirmBackOpen, setConfirmBackOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   useEffect(() => {
@@ -126,6 +132,12 @@ export default function ProfileEditPage() {
                   onClick={() => setConfirmResetOpen(true)}
                   variant="destructive"
                 />
+                <div className="my-1 h-px w-full bg-border" />
+                <SidebarButton
+                  icon={<ArrowLeft className="size-4" />}
+                  label="뒤로가기"
+                  onClick={() => setConfirmBackOpen(true)}
+                />
               </div>
             </TooltipProvider>
           </div>
@@ -182,6 +194,32 @@ export default function ProfileEditPage() {
         confirmLabel="초기화"
         variant="destructive"
       />
+      <AlertDialog open={confirmBackOpen} onOpenChange={setConfirmBackOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>편집 내용을 저장할까요?</AlertDialogTitle>
+            <AlertDialogDescription>저장하지 않으면 변경사항이 사라집니다.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-2 sm:gap-2">
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => { setConfirmBackOpen(false); router.push("/dashboard"); }}
+            >
+              저장하지 않고 나가기
+            </Button>
+            <Button
+              onClick={async () => {
+                setConfirmBackOpen(false);
+                const ok = await profile.saveNow({ skipSync: true });
+                if (ok) router.push("/dashboard");
+              }}
+            >
+              저장 후 나가기
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </EditFocusProvider>
   );

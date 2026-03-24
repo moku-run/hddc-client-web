@@ -186,6 +186,11 @@ export function useProfileData() {
 
   // ─── 서버에 저장 (PATCH) ───
   const saveNow = useCallback(async (opts?: { skipSync?: boolean }): Promise<boolean> => {
+    const incomplete = profileData.links.find((l) => !l.title || !l.url);
+    if (incomplete) {
+      toast.error("상품명과 링크는 필수 입력입니다");
+      return false;
+    }
     setSaveStatus("saving");
     try {
       const res = await profileApi.updateMe({

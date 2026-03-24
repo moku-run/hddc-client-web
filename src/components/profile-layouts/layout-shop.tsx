@@ -54,8 +54,8 @@ export function LayoutShop({ profileData, links }: LayoutProps) {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 min-h-[2.25rem] text-xs font-semibold leading-snug">{link.title}</p>
-                  <div className="mt-1"><PriceTag link={link} /></div>
+                  <p className={cn("line-clamp-2 min-h-[2.25rem] text-xs font-semibold leading-snug", !link.title && "opacity-40")}>{link.title || "상품명을 입력하세요"}</p>
+                  <div className="mt-1">{link.price != null ? <PriceTag link={link} /> : <span className="text-[10px] opacity-30">가격 미입력</span>}</div>
                   <div className="mt-0.5 flex items-center gap-1.5 text-[9px] opacity-50">
                     <LinkStats link={link} className="text-[9px]" />
                     {link.store && <span>{link.store}</span>}
