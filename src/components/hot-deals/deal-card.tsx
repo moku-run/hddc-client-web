@@ -96,6 +96,18 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
     return () => document.removeEventListener("mousedown", handleClick);
   }, [mobileMenuOpen]);
 
+  // auth 변경 시 좋아요/종료 상태 리셋
+  useEffect(() => {
+    function onAuthChange() {
+      if (!localStorage.getItem("hddc-auth")) {
+        setLiked(false);
+        setExpired(false);
+      }
+    }
+    window.addEventListener("hddc:auth-changed", onAuthChange);
+    return () => window.removeEventListener("hddc:auth-changed", onAuthChange);
+  }, []);
+
   const isLoggedIn = typeof window !== "undefined" && !!localStorage.getItem("hddc-auth");
 
   async function toggleLike() {
