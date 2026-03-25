@@ -139,11 +139,13 @@ export default function HotDealsPage() {
               {feed.map((item, i) => {
                 switch (item.type) {
                   case "deal":
-                    return <DealCard key={item.data.id} deal={{ ...item.data, viewCount: item.data.viewCount ?? 330 }} index={item.data.dealNumber} commentsOpen={activeCommentDealId === item.data.id} onToggleComments={() => setActiveCommentDealId((prev) => prev === item.data.id ? null : item.data.id)} />;
+                    return <DealCard key={`deal-${item.data.id}-${i}`} deal={{ ...item.data, viewCount: item.data.viewCount ?? 330 }} index={item.data.dealNumber} commentsOpen={activeCommentDealId === item.data.id} onToggleComments={() => setActiveCommentDealId((prev) => prev === item.data.id ? null : item.data.id)} />;
                   case "sponsor":
                     return <SponsorAd key={`sponsor-${i}`} />;
                   case "profile":
-                    return <ProfileCard key={item.data.slug} profile={item.data} />;
+                    return <ProfileCard key={`profile-${item.data.slug}-${i}`} profile={item.data} />;
+                  default:
+                    return null;
                 }
               })}
             </div>
