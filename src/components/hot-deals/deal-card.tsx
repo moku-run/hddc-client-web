@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Heart, ChatCircle, XCircle, Fire, CursorClick } from "@phosphor-icons/react";
+import { useState, useRef, useEffect } from "react";
+import { Heart, ChatCircle, XCircle, Fire, CursorClick, DotsThreeVertical, Flag } from "@phosphor-icons/react";
 import { IconText } from "@/components/ui/icon-text";
 import { ActionPill } from "@/components/ui/action-pill";
 import { toast } from "sonner";
@@ -82,6 +82,19 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
   const [expired, setExpired] = useState(deal.isVotedExpired);
   const [expiredCount, setExpiredCount] = useState(deal.expiredVoteCount);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  // 외부 클릭 시 모바일 메뉴 닫기
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) setMobileMenuOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [mobileMenuOpen]);
 
   const isLoggedIn = typeof window !== "undefined" && !!localStorage.getItem("hddc-auth");
 
@@ -118,7 +131,7 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
     <div
       id={`deal-${deal.id}`}
       className={cn(
-        "relative overflow-hidden border-t border-border/50 bg-card shadow-md transition-colors",
+        "relative border-t border-border/50 bg-card shadow-md transition-colors",
         // Mobile: rounded-xl (bottom bar), Desktop: rounded-r-xl (right strip) + right padding for strip
         "rounded-xl sm:min-h-24 sm:rounded-r-xl sm:rounded-l-none sm:pr-10",
         deal.isExpired && "opacity-60",
@@ -129,13 +142,20 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
         href={`/r/deals/${deal.id}`}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={(e) => {
+          // 모바일: confirm 먼저
+          if (window.innerWidth < 640) {
+            e.preventDefault();
+            setConfirmOpen(true);
+          }
+        }}
         className="group flex overflow-hidden"
       >
-        {/* Thumbnail — flush to card border */}
-        <div className="relative w-28 shrink-0 self-stretch overflow-hidden bg-muted sm:min-h-24 sm:w-24">
+        {/* Thumbnail — mobile: 80x80 fixed, desktop: w-24 self-stretch */}
+        <div className="relative size-20 shrink-0 overflow-hidden bg-muted sm:size-auto sm:min-h-24 sm:w-24 sm:self-stretch">
           {deal.imageUrl ? (
             <>
-              <div className="flex size-full items-center justify-center bg-foreground text-base font-bold text-background">핫딜닷쿨</div>
+              <div className="flex size-full items-center justify-center bg-foreground text-xs font-bold text-background sm:text-base">핫딜닷쿨</div>
               <img
                 src={deal.imageUrl}
                 alt={deal.title}
@@ -144,35 +164,54 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
               />
             </>
           ) : (
-            <div className="flex size-full items-center justify-center bg-foreground text-base font-bold text-background">핫딜닷쿨</div>
+            <div className="flex size-full items-center justify-center bg-foreground text-xs font-bold text-background sm:text-base">핫딜닷쿨</div>
           )}
           {deal.likeCount >= 30 && expiredCount < 5 && (
-            <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
-              <Fire className="size-3 shrink-0" weight="fill" />
-              HOT
+            <span className="absolute left-0.5 top-0.5 flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-1 py-0 text-[7px] font-bold text-white sm:left-1.5 sm:top-1.5 sm:px-2 sm:py-0.5 sm:text-[11px]">
+              <Fire className="size-2 sm:size-3" weight="fill" />HOT
             </span>
           )}
           {deal.isExpired && (
-            <span className="absolute right-1.5 top-1.5 rounded-full bg-muted-foreground/80 px-2 py-0.5 text-xs font-bold text-white">
+            <span className="absolute right-0.5 top-0.5 rounded-full bg-muted-foreground/80 px-1 py-0 text-[7px] font-bold text-white sm:right-1.5 sm:top-1.5 sm:px-2 sm:py-0.5 sm:text-xs">
               종료
             </span>
           )}
         </div>
 
-        {/* Content — text padding only */}
-        <div className="flex min-w-0 flex-1 flex-col justify-between px-2.5 py-2 sm:px-3 sm:py-2.5">
-          <h3 className="truncate text-base font-semibold leading-snug group-hover:text-primary sm:truncate sm:min-h-0">
+        {/* Content */}
+        <div className="flex min-w-0 flex-1 flex-col justify-center px-2 py-1.5 pr-6 sm:justify-between sm:px-3 sm:py-2.5 sm:pr-3">
+          {/* Mobile: 1줄 제목 / Desktop: 1줄 truncate */}
+          <h3 className="truncate text-sm font-semibold leading-snug group-hover:text-primary sm:text-base">
             {deal.title}
           </h3>
 
-          <div className="mt-1 flex flex-col gap-1">
+          {/* Mobile: 가격 + 메타 (이미지 80px 안에 3줄) */}
+          <div className="mt-1.5 flex flex-col gap-0 sm:hidden">
+            <span className="flex items-baseline gap-1">
+              {deal.discountRate != null && deal.originalPrice != null && deal.dealPrice != null && deal.originalPrice > deal.dealPrice && (
+                <span className="text-xs font-bold text-red-500">{deal.discountRate}%</span>
+              )}
+              <span className="text-sm font-bold">{deal.dealPrice != null ? `${formatPrice(deal.dealPrice)}원` : deal.originalPrice != null ? `${formatPrice(deal.originalPrice)}원` : ""}</span>
+              {deal.originalPrice != null && deal.dealPrice != null && deal.originalPrice > deal.dealPrice && (
+                <span className="text-[10px] text-muted-foreground line-through">{formatPrice(deal.originalPrice)}원</span>
+              )}
+            </span>
+            <span className="flex items-center justify-between text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-0.5"><CursorClick className="size-2.5" />{formatCount(deal.viewCount ?? 0)}</span>
+                <span className="inline-flex items-center gap-0.5"><Heart className="size-2.5" />{likeCount}</span>
+              </span>
+              <span className="truncate">{deal.nickname}{deal.store && <> · {deal.store}</>} · <span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span></span>
+            </span>
+          </div>
+
+          {/* Desktop: full price + meta rows */}
+          <div className="mt-1 hidden flex-col gap-1 sm:flex">
             <PriceDisplay
               originalPrice={deal.originalPrice}
               dealPrice={deal.dealPrice}
               discountRate={deal.discountRate}
             />
-
-            {/* Meta + desktop hover action pills */}
             <div className="group/meta relative flex items-center justify-between overflow-hidden">
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 {deal.viewCount != null && deal.viewCount > 0 && (
@@ -184,7 +223,7 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
                 {deal.nickname}{deal.store && <> · {deal.store}</>} · <span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
               </span>
               {/* Desktop hover pills */}
-              <div className="absolute right-0 hidden translate-x-full items-center gap-1.5 bg-card pl-2 transition-transform duration-200 ease-out group-hover/meta:translate-x-0 sm:flex">
+              <div className="absolute right-0 flex translate-x-full items-center gap-1.5 bg-card pl-2 transition-transform duration-200 ease-out group-hover/meta:translate-x-0">
                 <ActionPill
                   icon={Heart}
                   label="좋아요"
@@ -207,28 +246,31 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
         </div>
       </a>
 
-      {/* Mobile: Bottom action bar */}
-      <div className="flex items-center border-t border-border sm:hidden">
+      {/* Mobile: ⋮ menu (top-right) */}
+      <div ref={mobileMenuRef} className="absolute right-1 top-1 sm:hidden">
         <button
-          onClick={toggleLike}
-          className={cn("flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors", liked ? "text-red-500" : "text-muted-foreground")}
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Heart className="size-4" weight={liked ? "fill" : "regular"} />좋아요
+          <DotsThreeVertical className="size-4" weight="bold" />
         </button>
-        <div className="h-4 w-px bg-border" />
-        <button
-          onClick={toggleExpired}
-          className={cn("flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors", expired ? "text-orange-500" : "text-muted-foreground")}
-        >
-          <XCircle className="size-4" weight={expired ? "fill" : "regular"} />끝났어요
-        </button>
-        <div className="h-4 w-px bg-border" />
-        <button
-          onClick={toggleComments}
-          className={cn("flex flex-1 items-center justify-center gap-1.5 py-2 text-xs font-medium transition-colors", commentsOpen ? "text-primary" : "text-muted-foreground")}
-        >
-          <ChatCircle className="size-4" weight={commentsOpen ? "fill" : "regular"} />{deal.commentCount}
-        </button>
+        {mobileMenuOpen && (
+          <div className="absolute right-0 top-full mt-1 w-32 overflow-hidden rounded-lg border border-border bg-card shadow-lg z-20">
+            <button onClick={() => { setMobileMenuOpen(false); toggleLike(); }} className={cn("flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted", liked ? "text-red-500" : "text-foreground")}>
+              <Heart className="size-3.5 text-muted-foreground" weight={liked ? "fill" : "regular"} />좋아요
+            </button>
+            <button onClick={() => { setMobileMenuOpen(false); toggleComments(); }} className="flex w-full items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-muted">
+              <ChatCircle className="size-3.5 text-muted-foreground" />댓글 {deal.commentCount}
+            </button>
+            <div className="border-t border-border" />
+            <button onClick={() => { setMobileMenuOpen(false); toggleExpired(); }} className={cn("flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted", expired ? "text-orange-500" : "text-foreground")}>
+              <XCircle className="size-3.5 text-muted-foreground" weight={expired ? "fill" : "regular"} />끝났어요
+            </button>
+            <button className="flex w-full items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:bg-muted">
+              <Flag className="size-3.5" />신고
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Desktop: Right comment strip */}
@@ -242,6 +284,24 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
         <ChatCircle className="size-4" weight={commentsOpen ? "fill" : "regular"} />
         <span className="text-xs font-medium">{deal.commentCount}</span>
       </button>
+
+      {/* Mobile: navigate confirm */}
+      {confirmOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/30 sm:hidden" onClick={() => setConfirmOpen(false)} />
+          <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-border bg-card px-4 pb-6 pt-4 sm:hidden">
+            <p className="line-clamp-2 text-sm font-semibold">{deal.title}</p>
+            <p className="mt-1 text-xs text-muted-foreground">외부 사이트로 이동합니다</p>
+            <div className="mt-4 flex gap-2">
+              <button onClick={() => setConfirmOpen(false)} className="flex-1 rounded-lg bg-muted py-2.5 text-sm font-medium text-muted-foreground">취소</button>
+              <button
+                onClick={() => { setConfirmOpen(false); window.open(`/r/deals/${deal.id}`, "_blank", "noopener,noreferrer"); }}
+                className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground"
+              >이동하기</button>
+            </div>
+          </div>
+        </>
+      )}
 
       <CommentPanel deal={deal} open={commentsOpen} onClose={toggleComments} />
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
