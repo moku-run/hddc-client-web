@@ -118,7 +118,7 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
     <div
       id={`deal-${deal.id}`}
       className={cn(
-        "relative overflow-hidden bg-card shadow-md transition-colors",
+        "relative overflow-hidden border-t border-border/50 bg-card shadow-md transition-colors",
         // Mobile: rounded-xl (bottom bar), Desktop: rounded-r-xl (right strip) + right padding for strip
         "rounded-xl sm:min-h-24 sm:rounded-r-xl sm:rounded-l-none sm:pr-10",
         deal.isExpired && "opacity-60",
@@ -132,7 +132,7 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
         className="group flex overflow-hidden"
       >
         {/* Thumbnail — flush to card border */}
-        <div className="relative w-28 shrink-0 self-stretch overflow-hidden bg-muted sm:w-24">
+        <div className="relative w-28 shrink-0 self-stretch overflow-hidden bg-muted sm:min-h-24 sm:w-24">
           {deal.imageUrl ? (
             <>
               <div className="flex size-full items-center justify-center bg-foreground text-base font-bold text-background">핫딜닷쿨</div>
@@ -147,9 +147,9 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
             <div className="flex size-full items-center justify-center bg-foreground text-base font-bold text-background">핫딜닷쿨</div>
           )}
           {deal.likeCount >= 30 && expiredCount < 5 && (
-            <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-2 py-0.5 text-xs font-bold text-white shadow-sm">
+            <span className="absolute left-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
               <Fire className="size-3 shrink-0" weight="fill" />
-              인기
+              HOT
             </span>
           )}
           {deal.isExpired && (

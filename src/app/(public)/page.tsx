@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { Fire, CaretLeft, CaretRight, MagnifyingGlass, X } from "@phosphor-icons/react";
+import { CaretLeft, CaretRight, MagnifyingGlass, X } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { ToggleGroup } from "@/components/ui/toggle-group";
 import { SiteFooter } from "@/components/site-footer";
 import { DealCard } from "@/components/hot-deals/deal-card";
 import { SponsorAd } from "@/components/hot-deals/sponsor-ad";
@@ -120,42 +119,6 @@ export default function HotDealsPage() {
   return (
     <div className="flex min-h-full flex-col">
       <div className="flex-1">
-        {/* Sticky control bar */}
-        <div className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
-          <div className="mx-auto flex w-full max-w-3xl items-center gap-2 px-3 py-1.5 sm:px-6">
-            <Fire className="size-4 shrink-0 text-red-500" weight="fill" />
-            <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="relative flex-1">
-              <MagnifyingGlass className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="상품명, 판매처로 검색..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="h-7 w-full rounded-md border border-border bg-background pl-8 pr-8 text-[11px] outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
-              />
-              {searchInput && (
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <X className="size-3" />
-                </button>
-              )}
-            </form>
-            <ToggleGroup
-              variant="pill"
-              size="sm"
-              value={sortKey}
-              onValueChange={handleSortChange}
-              options={[
-                { value: "latest" as const, label: "최신순" },
-                { value: "popular" as const, label: "인기순" },
-              ]}
-            />
-          </div>
-        </div>
-
         {/* Feed */}
         <div className="mx-auto w-full max-w-3xl px-3 pt-3 pb-8 sm:px-6 sm:pt-4">
           {loading ? (
@@ -198,36 +161,59 @@ export default function HotDealsPage() {
             </p>
           )}
 
-          {/* Desktop: Pagination */}
-          {!isMobile && totalPages > 1 && !loading && (
-            <div className="mt-8 flex items-center justify-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => goTo(page - 1)}
-                disabled={page <= 0}
-              >
-                <CaretLeft className="size-4" />
-              </Button>
-              {Array.from({ length: totalPages }, (_, i) => i).map((p) => (
-                <Button
-                  key={p}
-                  variant={p === page ? "default" : "ghost"}
-                  size="sm"
-                  className="size-8 p-0 text-xs"
-                  onClick={() => goTo(p)}
-                >
-                  {p + 1}
-                </Button>
-              ))}
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => goTo(page + 1)}
-                disabled={page >= totalPages - 1}
-              >
-                <CaretRight className="size-4" />
-              </Button>
+          {/* Desktop: Pagination + Search */}
+          {!isMobile && !loading && (
+            <div className="mt-8 flex flex-col items-center gap-4">
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => goTo(page - 1)}
+                    disabled={page <= 0}
+                  >
+                    <CaretLeft className="size-4" />
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i).map((p) => (
+                    <Button
+                      key={p}
+                      variant={p === page ? "default" : "ghost"}
+                      size="sm"
+                      className="size-8 p-0 text-xs"
+                      onClick={() => goTo(p)}
+                    >
+                      {p + 1}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => goTo(page + 1)}
+                    disabled={page >= totalPages - 1}
+                  >
+                    <CaretRight className="size-4" />
+                  </Button>
+                </div>
+              )}
+              <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="relative w-full max-w-sm">
+                <MagnifyingGlass className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="상품명, 판매처로 검색..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="h-8 w-full rounded-full border border-border bg-background pl-9 pr-9 text-xs outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/30"
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <X className="size-3" />
+                  </button>
+                )}
+              </form>
             </div>
           )}
         </div>

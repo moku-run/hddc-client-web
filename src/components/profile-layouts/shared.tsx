@@ -109,7 +109,7 @@ export function PriceTag({ link }: { link: ProfileLink }) {
 export function HotBadge({ className }: { className?: string }) {
   return (
     <span className={cn("flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white", className)}>
-      <Fire className="size-2" weight="fill" />인기
+      <Fire className="size-2" weight="fill" />HOT
     </span>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 interface SiteHeaderProps {
@@ -15,7 +14,7 @@ export function SiteHeader({ nav, children, userMenu, maxWidth = "max-w-5xl" }: 
   const logoHref = "/";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 bg-background/50 shadow-md backdrop-blur-xl">
       <nav className={cn("mx-auto flex h-14 items-center justify-between px-4 sm:px-6", maxWidth)}>
         <div className="flex items-center gap-6">
           <Link href={logoHref} className="text-lg font-bold tracking-tight">
@@ -24,7 +23,7 @@ export function SiteHeader({ nav, children, userMenu, maxWidth = "max-w-5xl" }: 
           {nav}
         </div>
         {(children || userMenu) && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             {children}
             {userMenu}
           </div>
