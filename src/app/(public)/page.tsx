@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { MagnifyingGlass, X } from "@phosphor-icons/react";
+import { MagnifyingGlass, X, ArrowUp } from "@phosphor-icons/react";
 import { SiteFooter } from "@/components/site-footer";
 import { DealCard } from "@/components/hot-deals/deal-card";
 import { SponsorAd } from "@/components/hot-deals/sponsor-ad";
 import { ProfileCard } from "@/components/hot-deals/profile-card";
 import { buildFeed, type HotDeal, type FeedProfile, type DealSortKey } from "@/lib/hot-deal-types";
 import { fetchDeals, searchDeals } from "@/lib/hot-deal-api";
+import { connectSse, disconnectSse, SSE_EVENTS, type SseNewDeal, type SseDealUpdated, type SseDealExpired, type SseDealDeleted } from "@/lib/sse-client";
 
 const MOCK_PROFILES: FeedProfile[] = [
   { slug: "techdeals", nickname: "테크딜러", bio: "IT/전자기기 핫딜만 큐레이션합니다", avatarUrl: null },
@@ -16,14 +17,13 @@ const MOCK_PROFILES: FeedProfile[] = [
 
 /* ─── 뷰포트 기반 페이지 사이즈 계산 ─── */
 
-const CARD_HEIGHT_MOBILE = 92;  // 80px image + 12px gap
-const CARD_HEIGHT_DESKTOP = 108; // 96px min-h + 12px gap
+const CARD_HEIGHT_MOBILE = 92;
+const CARD_HEIGHT_DESKTOP = 108;
 
 function calcPageSize(isMobile: boolean): number {
   const h = typeof window !== "undefined" ? window.innerHeight : 800;
   const cardH = isMobile ? CARD_HEIGHT_MOBILE : CARD_HEIGHT_DESKTOP;
   const visible = Math.ceil(h / cardH);
-  // 초기 로드: 보이는 수 × 3 (buffer 2배)
   return Math.max(visible * 3, 20);
 }
 
@@ -41,6 +41,9 @@ export default function HotDealsPage() {
 
   const [activeCommentDealId, setActiveCommentDealId] = useState<number | null>(null);
 
+  /* ── SSE: 새 딜 대기열 ── */
+  const [pendingDeals, setPendingDeals] = useState<HotDeal[]>([]);
+
   /* ── 뷰포트 기반 pageSize 설정 ── */
   const [isMobile, setIsMobile] = useState(false);
 
@@ -55,6 +58,92 @@ export default function HotDealsPage() {
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
+
+  /* ── SSE 연결 ── */
+  useEffect(() => {
+    connectSse();
+    return () => disconnectSse();
+  }, []);
+
+  /* ── SSE: new-deal → 대기열에 추가 ── */
+  useEffect(() => {
+    function onNewDeal(e: Event) {
+      const data = (e as CustomEvent<SseNewDeal>).detail;
+      const newDeal: HotDeal = {
+        dealNumber: 0,
+        id: data.id,
+        userId: 0,
+        nickname: data.nickname,
+        title: data.title,
+        description: null,
+        url: "",
+        imageUrl: data.imageUrl,
+        originalPrice: data.originalPrice,
+        dealPrice: data.dealPrice,
+        discountRate: data.discountRate,
+        category: null,
+        store: data.store,
+        likeCount: data.likeCount,
+        commentCount: data.commentCount,
+        expiredVoteCount: 0,
+        isExpired: false,
+        viewCount: data.viewCount,
+        isLiked: false,
+        isVotedExpired: false,
+        createdAt: data.createdAt,
+      };
+      setPendingDeals((prev) => [newDeal, ...prev]);
+    }
+    window.addEventListener(SSE_EVENTS.NEW_DEAL, onNewDeal);
+    return () => window.removeEventListener(SSE_EVENTS.NEW_DEAL, onNewDeal);
+  }, []);
+
+  /* ── SSE: deal-updated → 실시간 수치 업데이트 ── */
+  useEffect(() => {
+    function onDealUpdated(e: Event) {
+      const data = (e as CustomEvent<SseDealUpdated>).detail;
+      setAllDeals((prev) => prev.map((d) => {
+        if (d.id !== data.id) return d;
+        return {
+          ...d,
+          ...(data.likeCount != null && { likeCount: data.likeCount }),
+          ...(data.viewCount != null && { viewCount: data.viewCount }),
+          ...(data.expiredVoteCount != null && { expiredVoteCount: data.expiredVoteCount }),
+          ...(data.commentCount != null && { commentCount: data.commentCount }),
+        };
+      }));
+    }
+    window.addEventListener(SSE_EVENTS.DEAL_UPDATED, onDealUpdated);
+    return () => window.removeEventListener(SSE_EVENTS.DEAL_UPDATED, onDealUpdated);
+  }, []);
+
+  /* ── SSE: deal-expired → 종료 표시 ── */
+  useEffect(() => {
+    function onDealExpired(e: Event) {
+      const { id } = (e as CustomEvent<SseDealExpired>).detail;
+      setAllDeals((prev) => prev.map((d) => d.id === id ? { ...d, isExpired: true } : d));
+    }
+    window.addEventListener(SSE_EVENTS.DEAL_EXPIRED, onDealExpired);
+    return () => window.removeEventListener(SSE_EVENTS.DEAL_EXPIRED, onDealExpired);
+  }, []);
+
+  /* ── SSE: deal-deleted → 피드에서 제거 ── */
+  useEffect(() => {
+    function onDealDeleted(e: Event) {
+      const { id } = (e as CustomEvent<SseDealDeleted>).detail;
+      setAllDeals((prev) => prev.filter((d) => d.id !== id));
+    }
+    window.addEventListener(SSE_EVENTS.DEAL_DELETED, onDealDeleted);
+    return () => window.removeEventListener(SSE_EVENTS.DEAL_DELETED, onDealDeleted);
+  }, []);
+
+  /* ── "새 핫딜" 배너 클릭 → 대기열을 피드 상단에 삽입 ── */
+  function loadPendingDeals() {
+    setAllDeals((prev) => [...pendingDeals, ...prev]);
+    setPendingDeals([]);
+    // 맨 위로 스크롤
+    document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   /* ── Fetch deals ── */
   const loadDeals = useCallback(async (sort: DealSortKey, p: number, q: string, append: boolean) => {
@@ -84,12 +173,12 @@ export default function HotDealsPage() {
   useEffect(() => {
     setAllDeals([]);
     setHasMore(true);
+    setPendingDeals([]);
     loadDeals(sortKey, 0, query, false);
   }, [sortKey, query, loadDeals]);
 
   /* ── 무한 스크롤: 스크롤 60% 지점에서 선제적 fetch ── */
   useEffect(() => {
-    // 스크롤 컨테이너: 부모 <main overflow-y-auto>
     const scrollEl = document.querySelector("main");
     if (!scrollEl) return;
 
@@ -147,6 +236,16 @@ export default function HotDealsPage() {
 
         {/* Feed */}
         <div className="mx-auto w-full max-w-3xl px-3 pt-3 pb-8 sm:px-6">
+          {/* 새 핫딜 배너 */}
+          {pendingDeals.length > 0 && (
+            <button
+              onClick={loadPendingDeals}
+              className="mb-3 flex w-full items-center justify-center gap-1.5 rounded-full bg-primary py-2.5 text-xs font-medium text-primary-foreground shadow-lg transition-all hover:bg-primary/90"
+            >
+              <ArrowUp className="size-3" />{pendingDeals.length}개의 새 핫딜
+            </button>
+          )}
+
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />

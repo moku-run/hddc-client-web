@@ -7,6 +7,7 @@ import { getAvatarColor } from "@/lib/avatar-color";
 import { cn } from "@/lib/utils";
 import type { HotDeal, DealComment } from "@/lib/hot-deal-types";
 import { fetchComments, addComment, deleteComment, likeComment, unlikeComment } from "@/lib/hot-deal-api";
+import { SSE_EVENTS, type SseNewComment, type SseCommentDeleted } from "@/lib/sse-client";
 import { ReportPopover } from "./report-popover";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -94,6 +95,46 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
     else document.body.removeAttribute("data-comment-panel");
     return () => document.body.removeAttribute("data-comment-panel");
   }, [open]);
+
+  /* ── SSE: 실시간 댓글 추가 ── */
+  useEffect(() => {
+    if (!open) return;
+    function onNewComment(e: Event) {
+      const data = (e as CustomEvent<SseNewComment>).detail;
+      if (data.dealId !== deal.id) return;
+      // 내가 방금 작성한 댓글이면 무시 (이미 로컬에 추가됨)
+      setComments((prev) => {
+        if (prev.some((c) => c.id === data.id)) return prev;
+        return [...prev, {
+          id: data.id,
+          dealId: data.dealId,
+          userId: 0,
+          nickname: data.nickname,
+          parentId: data.parentId,
+          content: data.content,
+          likeCount: 0,
+          isLiked: false,
+          createdAt: data.createdAt,
+        }];
+      });
+    }
+    window.addEventListener(SSE_EVENTS.NEW_COMMENT, onNewComment);
+    return () => window.removeEventListener(SSE_EVENTS.NEW_COMMENT, onNewComment);
+  }, [open, deal.id]);
+
+  /* ── SSE: 실시간 댓글 삭제 ── */
+  useEffect(() => {
+    if (!open) return;
+    function onCommentDeleted(e: Event) {
+      const data = (e as CustomEvent<SseCommentDeleted>).detail;
+      if (data.dealId !== deal.id) return;
+      setComments((prev) => prev.map((c) =>
+        c.id === data.id ? { ...c, content: "", nickname: "", userId: -1 } : c
+      ));
+    }
+    window.addEventListener(SSE_EVENTS.COMMENT_DELETED, onCommentDeleted);
+    return () => window.removeEventListener(SSE_EVENTS.COMMENT_DELETED, onCommentDeleted);
+  }, [open, deal.id]);
 
   const loadComments = useCallback(async () => {
     if (commentsLoaded) return;
