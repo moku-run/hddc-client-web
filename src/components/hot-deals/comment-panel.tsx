@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, PaperPlaneTilt, Trash, ArrowBendDownRight, ArrowSquareOut, Heart } from "@phosphor-icons/react";
+import { X, PaperPlaneTilt, Trash, ArrowBendDownRight, ArrowSquareOut, Heart, ChatCircle } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { getAvatarColor } from "@/lib/avatar-color";
 import { cn } from "@/lib/utils";
@@ -64,6 +64,8 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
   const [commentText, setCommentText] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: number; nickname: string } | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [pendingNewComments, setPendingNewComments] = useState(0);
+  const myCommentIdsRef = useRef<Set<number>>(new Set());
   const replyInputRef = useRef<HTMLDivElement>(null);
 
   // 대댓글 입력창이 스크롤로 안 보이면 자동 닫힘
@@ -96,27 +98,21 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
     return () => document.body.removeAttribute("data-comment-panel");
   }, [open]);
 
-  /* ── SSE: 실시간 댓글 추가 ── */
+  /* ── SSE: 실시간 댓글 — 내 댓글은 즉시, 남의 댓글은 카운터만 ── */
   useEffect(() => {
     if (!open) return;
     function onNewComment(e: Event) {
       const data = (e as CustomEvent<SseNewComment>).detail;
       if (data.dealId !== deal.id) return;
-      // 내가 방금 작성한 댓글이면 무시 (이미 로컬에 추가됨)
+      // 내가 방금 작성한 댓글이면 무시 (submitComment에서 이미 추가됨)
+      if (myCommentIdsRef.current.has(data.id)) return;
+      // 이미 목록에 있으면 무시
       setComments((prev) => {
         if (prev.some((c) => c.id === data.id)) return prev;
-        return [...prev, {
-          id: data.id,
-          dealId: data.dealId,
-          userId: 0,
-          nickname: data.nickname,
-          parentId: data.parentId,
-          content: data.content,
-          likeCount: 0,
-          isLiked: false,
-          createdAt: data.createdAt,
-        }];
+        return prev; // 목록에 삽입하지 않음
       });
+      // 남의 댓글 → 카운터만 증가
+      setPendingNewComments((prev) => prev + 1);
     }
     window.addEventListener(SSE_EVENTS.NEW_COMMENT, onNewComment);
     return () => window.removeEventListener(SSE_EVENTS.NEW_COMMENT, onNewComment);
@@ -168,12 +164,25 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
     if (open) loadComments();
   }, [open, loadComments]);
 
+  async function refreshComments() {
+    try {
+      const page = await fetchComments(deal.id);
+      setComments(page.comments);
+      setNextCursor(page.nextCursor);
+      setHasNext(page.hasNext);
+      setPendingNewComments(0);
+    } catch {
+      toast.error("댓글을 불러올 수 없습니다");
+    }
+  }
+
   async function submitComment() {
     if (!isLoggedIn) { setAuthModalOpen(true); return; }
     const text = commentText.trim();
     if (!text) return;
     try {
       const created = await addComment(deal.id, text, replyTo?.id);
+      myCommentIdsRef.current.add(created.id);
       setComments((prev) => [...prev, created]);
       setCommentText("");
       setReplyTo(null);
@@ -362,14 +371,32 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                 );
               })}
 
-              {/* 더보기 버튼 */}
+              {/* 더보기 버튼 — 새 댓글 있으면 primary로 전환 */}
               {hasNext && (
+                pendingNewComments > 0 ? (
+                  <button
+                    onClick={refreshComments}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-md bg-primary py-1.5 text-[10px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    <ChatCircle className="size-3" />새 댓글 {pendingNewComments}개 포함 · 더보기
+                  </button>
+                ) : (
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="w-full rounded-md bg-muted py-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                  >
+                    {loadingMore ? "불러오는 중..." : "이전 댓글 더보기"}
+                  </button>
+                )
+              )}
+              {/* 더보기 없을 때도 새 댓글 알림 */}
+              {!hasNext && pendingNewComments > 0 && (
                 <button
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  className="w-full rounded-md bg-muted py-1.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                  onClick={refreshComments}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-md bg-primary py-1.5 text-[10px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                 >
-                  {loadingMore ? "불러오는 중..." : "이전 댓글 더보기"}
+                  <ChatCircle className="size-3" />새 댓글 {pendingNewComments}개
                 </button>
               )}
             </div>

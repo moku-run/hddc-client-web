@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Heart, ChatCircle, XCircle, Fire, CursorClick, DotsThreeVertical, Flag } from "@phosphor-icons/react";
+import { Heart, ChatCircle, XCircle, CursorClick, DotsThreeVertical, Flag } from "@phosphor-icons/react";
+import { FireLogo } from "@/components/icons/fire-logo";
 import { IconText } from "@/components/ui/icon-text";
 import { ActionPill } from "@/components/ui/action-pill";
 import { toast } from "sonner";
@@ -81,6 +82,10 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
   const toggleComments = onToggleComments ?? (() => setCommentsOpenLocal((prev) => !prev));
   const [expired, setExpired] = useState(deal.isVotedExpired);
   const [expiredCount, setExpiredCount] = useState(deal.expiredVoteCount);
+
+  // SSE로 deal prop이 변경되면 로컬 state 동기화
+  useEffect(() => { setLikeCount(deal.likeCount); }, [deal.likeCount]);
+  useEffect(() => { setExpiredCount(deal.expiredVoteCount); }, [deal.expiredVoteCount]);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -179,8 +184,8 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
             <div className="flex size-full items-center justify-center bg-foreground text-xs font-bold text-background sm:text-base">핫딜닷쿨</div>
           )}
           {deal.likeCount >= 30 && expiredCount < 5 && (
-            <span className="absolute left-0.5 top-0.5 flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-1 py-0 text-[7px] font-bold text-white sm:left-1.5 sm:top-1.5 sm:px-2 sm:py-0.5 sm:text-[11px]">
-              <Fire className="size-2 sm:size-3" weight="fill" />HOT
+            <span className="absolute left-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-500 shadow-sm sm:left-1.5 sm:top-1.5">
+              <FireLogo className="size-4" bgColor="white" />
             </span>
           )}
           {deal.isExpired && (
@@ -315,7 +320,7 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
         </>
       )}
 
-      <CommentPanel deal={deal} open={commentsOpen} onClose={toggleComments} />
+      {commentsOpen && <CommentPanel deal={deal} open={commentsOpen} onClose={toggleComments} />}
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </div>
   );

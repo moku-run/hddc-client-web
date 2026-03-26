@@ -1,6 +1,7 @@
 "use client";
 
-import { Fire, CursorClick, Heart, ArrowSquareOut } from "@phosphor-icons/react";
+import { CursorClick, Heart, ArrowSquareOut } from "@phosphor-icons/react";
+import { FireLogo } from "@/components/icons/fire-logo";
 import { cn } from "@/lib/utils";
 import { R2Image } from "@/components/ui/r2-image";
 import { useEditFocus, type EditSection } from "@/contexts/edit-focus-context";
@@ -108,8 +109,8 @@ export function PriceTag({ link }: { link: ProfileLink }) {
 
 export function HotBadge({ className }: { className?: string }) {
   return (
-    <span className={cn("flex items-center gap-0.5 rounded-full bg-gradient-to-r from-red-600 to-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white", className)}>
-      <Fire className="size-2" weight="fill" />HOT
+    <span className={cn("flex size-4 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-500 shadow-sm", className)}>
+      <FireLogo className="size-4" bgColor="white" />
     </span>
   );
 }

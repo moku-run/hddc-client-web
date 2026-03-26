@@ -107,7 +107,7 @@ export default function HotDealsPage() {
         return {
           ...d,
           ...(data.likeCount != null && { likeCount: data.likeCount }),
-          ...(data.viewCount != null && { viewCount: data.viewCount }),
+          ...(data.clickCount != null && { viewCount: data.clickCount }),
           ...(data.expiredVoteCount != null && { expiredVoteCount: data.expiredVoteCount }),
           ...(data.commentCount != null && { commentCount: data.commentCount }),
         };

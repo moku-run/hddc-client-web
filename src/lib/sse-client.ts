@@ -17,10 +17,10 @@ export interface SseNewDeal {
 
 export interface SseDealUpdated {
   id: number;
-  likeCount?: number;
-  viewCount?: number;
-  expiredVoteCount?: number;
-  commentCount?: number;
+  likeCount?: number | null;
+  clickCount?: number | null;
+  expiredVoteCount?: number | null;
+  commentCount?: number | null;
 }
 
 export interface SseDealExpired {
@@ -63,9 +63,11 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function connectSse() {
   if (typeof window === "undefined") return;
-  if (eventSource) return; // 이미 연결 중
+  if (eventSource) return;
 
-  eventSource = new EventSource("/api/events/stream");
+  // Next.js rewrite 프록시는 SSE를 버퍼링하므로 백엔드에 직접 연결
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  eventSource = new EventSource(`${baseUrl}/api/events/stream`);
 
   eventSource.addEventListener("new-deal", (e) => {
     const data: SseNewDeal = JSON.parse(e.data);
