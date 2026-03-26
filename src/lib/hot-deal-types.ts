@@ -24,7 +24,7 @@ export interface HotDeal {
   commentCount: number;
   expiredVoteCount: number;
   isExpired: boolean;
-  viewCount?: number;
+  clickCount: number;
   isLiked: boolean;
   isVotedExpired: boolean;
   createdAt: string;

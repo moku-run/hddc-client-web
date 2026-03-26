@@ -4,16 +4,9 @@ import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { MagnifyingGlass, X, ArrowUp } from "@phosphor-icons/react";
 import { SiteFooter } from "@/components/site-footer";
 import { DealCard } from "@/components/hot-deals/deal-card";
-import { SponsorAd } from "@/components/hot-deals/sponsor-ad";
-import { ProfileCard } from "@/components/hot-deals/profile-card";
-import { buildFeed, type HotDeal, type FeedProfile, type DealSortKey } from "@/lib/hot-deal-types";
+import type { HotDeal, DealSortKey } from "@/lib/hot-deal-types";
 import { fetchDeals, searchDeals } from "@/lib/hot-deal-api";
 import { connectSse, disconnectSse, SSE_EVENTS, type SseNewDeal, type SseDealUpdated, type SseDealExpired, type SseDealDeleted } from "@/lib/sse-client";
-
-const MOCK_PROFILES: FeedProfile[] = [
-  { slug: "techdeals", nickname: "테크딜러", bio: "IT/전자기기 핫딜만 큐레이션합니다", avatarUrl: null },
-  { slug: "fashionhunter", nickname: "패션헌터", bio: "무신사/지그재그/에이블리 특가 모음", avatarUrl: null },
-];
 
 /* ─── 뷰포트 기반 페이지 사이즈 계산 ─── */
 
@@ -87,7 +80,7 @@ export default function HotDealsPage() {
         commentCount: data.commentCount,
         expiredVoteCount: 0,
         isExpired: false,
-        viewCount: data.viewCount,
+        clickCount: data.clickCount ?? 0,
         isLiked: false,
         isVotedExpired: false,
         createdAt: data.createdAt,
@@ -107,7 +100,7 @@ export default function HotDealsPage() {
         return {
           ...d,
           ...(data.likeCount != null && { likeCount: data.likeCount }),
-          ...(data.clickCount != null && { viewCount: data.clickCount }),
+          ...(data.clickCount != null && { clickCount: data.clickCount }),
           ...(data.expiredVoteCount != null && { expiredVoteCount: data.expiredVoteCount }),
           ...(data.commentCount != null && { commentCount: data.commentCount }),
         };
@@ -206,8 +199,6 @@ export default function HotDealsPage() {
     setQuery("");
   }
 
-  const feed = useMemo(() => buildFeed(allDeals, MOCK_PROFILES), [allDeals]);
-
   return (
     <div className="flex min-h-full flex-col">
       <div className="flex-1">
@@ -261,18 +252,15 @@ export default function HotDealsPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {feed.map((item, i) => {
-                switch (item.type) {
-                  case "deal":
-                    return <DealCard key={`deal-${item.data.id}-${i}`} deal={{ ...item.data, viewCount: item.data.viewCount ?? 330 }} index={item.data.dealNumber} commentsOpen={activeCommentDealId === item.data.id} onToggleComments={() => setActiveCommentDealId((prev) => prev === item.data.id ? null : item.data.id)} />;
-                  case "sponsor":
-                    return <SponsorAd key={`sponsor-${i}`} />;
-                  case "profile":
-                    return <ProfileCard key={`profile-${item.data.slug}-${i}`} profile={item.data} />;
-                  default:
-                    return null;
-                }
-              })}
+              {allDeals.map((deal) => (
+                <DealCard
+                  key={`deal-${deal.id}`}
+                  deal={deal}
+                  index={deal.dealNumber}
+                  commentsOpen={activeCommentDealId === deal.id}
+                  onToggleComments={() => setActiveCommentDealId((prev) => prev === deal.id ? null : deal.id)}
+                />
+              ))}
             </div>
           )}
 

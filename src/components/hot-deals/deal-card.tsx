@@ -83,9 +83,35 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
   const [expired, setExpired] = useState(deal.isVotedExpired);
   const [expiredCount, setExpiredCount] = useState(deal.expiredVoteCount);
 
-  // SSE로 deal prop이 변경되면 로컬 state 동기화
-  useEffect(() => { setLikeCount(deal.likeCount); }, [deal.likeCount]);
+  // SSE 애니메이션 flash
+  const [clickFlash, setClickFlash] = useState(false);
+  const [likeFlash, setLikeFlash] = useState(false);
+  const [commentFlash, setCommentFlash] = useState(false);
+  const prevClickCount = useRef(deal.clickCount);
+  const prevLikeCount = useRef(deal.likeCount);
+  const prevCommentCount = useRef(deal.commentCount);
+
+  // SSE로 deal prop이 변경되면 로컬 state 동기화 + 애니메이션 트리거 (이전값 비교)
+  useEffect(() => {
+    if (prevLikeCount.current !== deal.likeCount) {
+      setLikeFlash(true); setTimeout(() => setLikeFlash(false), 800);
+    }
+    prevLikeCount.current = deal.likeCount;
+    setLikeCount(deal.likeCount);
+  }, [deal.likeCount]);
   useEffect(() => { setExpiredCount(deal.expiredVoteCount); }, [deal.expiredVoteCount]);
+  useEffect(() => {
+    if (prevClickCount.current !== deal.clickCount) {
+      setClickFlash(true); setTimeout(() => setClickFlash(false), 800);
+    }
+    prevClickCount.current = deal.clickCount;
+  }, [deal.clickCount]);
+  useEffect(() => {
+    if (prevCommentCount.current !== deal.commentCount) {
+      setCommentFlash(true); setTimeout(() => setCommentFlash(false), 3000);
+    }
+    prevCommentCount.current = deal.commentCount;
+  }, [deal.commentCount]);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -215,8 +241,16 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
             </span>
             <span className="flex items-center justify-between text-[10px] text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <span className="inline-flex items-center gap-0.5"><CursorClick className="size-2.5" />{formatCount(deal.viewCount ?? 0)}</span>
-                <span className="inline-flex items-center gap-0.5"><Heart className="size-2.5" />{likeCount}</span>
+                <span className="relative inline-flex items-center gap-0.5">
+                  <CursorClick className={cn("size-2.5 transition-transform duration-300", clickFlash && "scale-150 text-blue-500")} />
+                  {formatCount(deal.clickCount ?? 0)}
+                  {clickFlash && <span className="absolute -right-3 -top-2 text-[9px] font-bold text-blue-500 animate-in fade-in zoom-in">+1</span>}
+                </span>
+                <span className="relative inline-flex items-center gap-0.5">
+                  <Heart className={cn("size-2.5 transition-all duration-300", likeFlash && "scale-150 text-red-500")} weight={likeFlash ? "fill" : "regular"} />
+                  {likeCount}
+                  {likeFlash && <span className="absolute -right-3 -top-2 text-[9px] font-bold text-red-500 animate-in fade-in zoom-in">+1</span>}
+                </span>
               </span>
               <span className="truncate">{deal.nickname}{deal.store && <> · {deal.store}</>} · <span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span></span>
             </span>
@@ -231,10 +265,16 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
             />
             <div className="group/meta relative flex items-center justify-between overflow-hidden">
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                {deal.viewCount != null && deal.viewCount > 0 && (
-                  <IconText icon={CursorClick}>{formatCount(deal.viewCount)}</IconText>
-                )}
-                <IconText icon={Heart}>{likeCount}</IconText>
+                <span className="relative inline-flex items-center gap-0.5">
+                  <CursorClick className={cn("size-2.5 transition-transform duration-300", clickFlash && "scale-150 text-blue-500")} />
+                  {formatCount(deal.clickCount ?? 0)}
+                  {clickFlash && <span className="absolute -right-3 -top-2 text-[9px] font-bold text-blue-500 animate-in fade-in zoom-in">+1</span>}
+                </span>
+                <span className="relative inline-flex items-center gap-0.5">
+                  <Heart className={cn("size-2.5 transition-all duration-300", likeFlash && "scale-150 text-red-500")} weight={likeFlash ? "fill" : "regular"} />
+                  {likeCount}
+                  {likeFlash && <span className="absolute -right-3 -top-2 text-[9px] font-bold text-red-500 animate-in fade-in zoom-in">+1</span>}
+                </span>
               </span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 {deal.nickname}{deal.store && <> · {deal.store}</>} · <span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span>
@@ -298,8 +338,8 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
           commentsOpen ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground",
         )}
       >
-        <ChatCircle className="size-4" weight={commentsOpen ? "fill" : "regular"} />
-        <span className="text-xs font-medium">{deal.commentCount}</span>
+        <ChatCircle className={cn("size-4 transition-all duration-300", commentFlash && !commentsOpen && "scale-125 text-primary")} weight={commentsOpen || commentFlash ? "fill" : "regular"} />
+        <span className={cn("text-xs font-medium transition-colors", commentFlash && !commentsOpen && "font-bold text-primary")}>{deal.commentCount}</span>
       </button>
 
       {/* Mobile: navigate confirm */}

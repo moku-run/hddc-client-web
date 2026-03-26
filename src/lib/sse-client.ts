@@ -11,7 +11,7 @@ export interface SseNewDeal {
   store: string | null;
   likeCount: number;
   commentCount: number;
-  viewCount: number;
+  clickCount: number;
   createdAt: string;
 }
 
