@@ -149,7 +149,11 @@ export default function HotDealsPage() {
         : await fetchDeals(sort, p, size);
 
       if (append) {
-        setAllDeals((prev) => [...prev, ...result.content]);
+        setAllDeals((prev) => {
+          const existingIds = new Set(prev.map((d) => d.id));
+          const newDeals = result.content.filter((d) => !existingIds.has(d.id));
+          return [...prev, ...newDeals];
+        });
       } else {
         setAllDeals(result.content);
       }

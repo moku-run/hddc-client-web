@@ -108,7 +108,7 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
     return () => document.body.removeAttribute("data-comment-panel");
   }, [open]);
 
-  /* ── SSE: 실시간 댓글 — 내 댓글은 즉시, 남의 댓글은 카운터만 ── */
+  /* ── SSE: 실시간 댓글 — 내 댓글 이후면 바로 표시, 아니면 카운터 ── */
   useEffect(() => {
     if (!open) return;
     function onNewComment(e: Event) {
@@ -116,17 +116,34 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
       if (data.dealId !== deal.id) return;
       // 내가 방금 작성한 댓글이면 무시 (submitComment에서 이미 추가됨)
       if (myCommentIdsRef.current.has(data.id)) return;
-      // 이미 목록에 있으면 무시
-      setComments((prev) => {
-        if (prev.some((c) => c.id === data.id)) return prev;
-        return prev; // 목록에 삽입하지 않음
+
+      const sseComment: DealComment = {
+        id: data.id,
+        dealId: data.dealId,
+        userId: 0,
+        nickname: data.nickname,
+        parentId: data.parentId,
+        content: data.content,
+        likeCount: 0,
+        isLiked: false,
+        createdAt: data.createdAt,
+      };
+
+      // 내 새 댓글이 있으면 → 바로 아래에 추가 (실시간 표시)
+      setMyNewComments((prev) => {
+        if (prev.length === 0) return prev; // 내 댓글 없으면 여기서 처리 안 함
+        if (prev.some((c) => c.id === data.id)) return prev; // 중복 방지
+        return [...prev, sseComment];
       });
-      // 남의 댓글 → 카운터만 증가
-      setPendingNewComments((prev) => prev + 1);
+
+      // 내 새 댓글이 없으면 → 카운터만 증가
+      if (myNewComments.length === 0) {
+        setPendingNewComments((prev) => prev + 1);
+      }
     }
     window.addEventListener(SSE_EVENTS.NEW_COMMENT, onNewComment);
     return () => window.removeEventListener(SSE_EVENTS.NEW_COMMENT, onNewComment);
-  }, [open, deal.id]);
+  }, [open, deal.id, myNewComments.length]);
 
   /* ── SSE: 실시간 댓글 삭제 ── */
   useEffect(() => {

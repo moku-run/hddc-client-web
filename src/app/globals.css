@@ -213,5 +213,5 @@ summary,
   80% { transform: translateY(0); }
 }
 .animate-bounce-y {
-  animation: bounce-y 1.2s ease-in-out;
+  animation: bounce-y 3s ease-in-out;
 }
