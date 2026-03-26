@@ -65,6 +65,7 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
   const [replyTo, setReplyTo] = useState<{ id: number; nickname: string } | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingNewComments, setPendingNewComments] = useState(0);
+  const [myNewComments, setMyNewComments] = useState<DealComment[]>([]);
   const myCommentIdsRef = useRef<Set<number>>(new Set());
   const replyInputRef = useRef<HTMLDivElement>(null);
 
@@ -90,6 +91,15 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
     const arr = repliesMap.get(c.parentId!) || [];
     arr.push(c);
     repliesMap.set(c.parentId!, arr);
+  });
+
+  // 내 새 댓글 (더보기 아래에 별도 표시)
+  const myRootComments = myNewComments.filter((c) => !c.parentId);
+  const myRepliesMap = new Map<number, DealComment[]>();
+  myNewComments.filter((c) => c.parentId).forEach((c) => {
+    const arr = myRepliesMap.get(c.parentId!) || [];
+    arr.push(c);
+    myRepliesMap.set(c.parentId!, arr);
   });
 
   useEffect(() => {
@@ -150,7 +160,10 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
     setLoadingMore(true);
     try {
       const page = await fetchComments(deal.id, 20, nextCursor);
+      const newIds = new Set(page.comments.map((c) => c.id));
       setComments((prev) => [...prev, ...page.comments]);
+      // 더보기로 불러온 댓글에 내 새 댓글이 포함되면 중복 제거
+      setMyNewComments((prev) => prev.filter((c) => !newIds.has(c.id)));
       setNextCursor(page.nextCursor);
       setHasNext(page.hasNext);
     } catch {
@@ -167,7 +180,9 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
   async function refreshComments() {
     try {
       const page = await fetchComments(deal.id);
+      const newIds = new Set(page.comments.map((c) => c.id));
       setComments(page.comments);
+      setMyNewComments((prev) => prev.filter((c) => !newIds.has(c.id)));
       setNextCursor(page.nextCursor);
       setHasNext(page.hasNext);
       setPendingNewComments(0);
@@ -183,7 +198,7 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
     try {
       const created = await addComment(deal.id, text, replyTo?.id);
       myCommentIdsRef.current.add(created.id);
-      setComments((prev) => [...prev, created]);
+      setMyNewComments((prev) => [...prev, created]);
       setCommentText("");
       setReplyTo(null);
       requestAnimationFrame(() => {
@@ -399,6 +414,24 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
                   <ChatCircle className="size-3" />새 댓글 {pendingNewComments}개
                 </button>
               )}
+
+              {/* 내가 방금 작성한 댓글 (더보기 아래) */}
+              {myRootComments.map((c) => (
+                <div key={c.id} id={`comment-${c.id}`}>
+                  <div className="flex items-start gap-2 text-xs">
+                    <div className="flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white" style={{ backgroundColor: getAvatarColor(c.nickname) }}>
+                      {c.nickname.charAt(0)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="font-semibold">{c.nickname}</span>
+                        <span className="text-[10px] text-muted-foreground/60" suppressHydrationWarning>{timeAgo(c.createdAt)}</span>
+                      </div>
+                      <p className="mt-0.5 whitespace-pre-wrap break-all text-muted-foreground">{c.content}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <p className="py-8 text-center text-xs text-muted-foreground/50">아직 댓글이 없습니다</p>

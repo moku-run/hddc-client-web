@@ -66,8 +66,9 @@ export function connectSse() {
   if (eventSource) return;
 
   // Next.js rewrite 프록시는 SSE를 버퍼링하므로 백엔드에 직접 연결
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-  eventSource = new EventSource(`${baseUrl}/api/events/stream`);
+  // 현재 브라우저 호스트 기반으로 백엔드 URL 결정 (모바일/PC 모두 대응)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || `http://${window.location.hostname}:8080`;
+  eventSource = new EventSource(`${apiUrl}/api/events/stream`);
 
   eventSource.addEventListener("new-deal", (e) => {
     const data: SseNewDeal = JSON.parse(e.data);

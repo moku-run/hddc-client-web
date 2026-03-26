@@ -85,7 +85,7 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
 
   // SSE 애니메이션 flash
   const [clickFlash, setClickFlash] = useState(false);
-  const [likeFlash, setLikeFlash] = useState(false);
+  const [likeFlash, setLikeFlash] = useState<"up" | "down" | null>(null);
   const [commentFlash, setCommentFlash] = useState(false);
   const prevClickCount = useRef(deal.clickCount);
   const prevLikeCount = useRef(deal.likeCount);
@@ -94,7 +94,8 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
   // SSE로 deal prop이 변경되면 로컬 state 동기화 + 애니메이션 트리거 (이전값 비교)
   useEffect(() => {
     if (prevLikeCount.current !== deal.likeCount) {
-      setLikeFlash(true); setTimeout(() => setLikeFlash(false), 800);
+      const dir = deal.likeCount > prevLikeCount.current ? "up" : "down";
+      setLikeFlash(dir); setTimeout(() => setLikeFlash(null), 800);
     }
     prevLikeCount.current = deal.likeCount;
     setLikeCount(deal.likeCount);
@@ -244,12 +245,17 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
                 <span className="relative inline-flex items-center gap-0.5">
                   <CursorClick className={cn("size-2.5 transition-transform duration-300", clickFlash && "scale-150 text-blue-500")} />
                   {formatCount(deal.clickCount ?? 0)}
-                  {clickFlash && <span className="absolute -right-3 -top-2 text-[9px] font-bold text-blue-500 animate-in fade-in zoom-in">+1</span>}
+                  {clickFlash && <span className="absolute -right-3 -top-2 z-10 text-[9px] font-bold text-blue-500 animate-in fade-in zoom-in">+1</span>}
                 </span>
                 <span className="relative inline-flex items-center gap-0.5">
                   <Heart className={cn("size-2.5 transition-all duration-300", likeFlash && "scale-150 text-red-500")} weight={likeFlash ? "fill" : "regular"} />
                   {likeCount}
-                  {likeFlash && <span className="absolute -right-3 -top-2 text-[9px] font-bold text-red-500 animate-in fade-in zoom-in">+1</span>}
+                  {likeFlash === "up" && <span className="absolute -right-3 -top-2 z-10 text-[9px] font-bold text-red-500 animate-in fade-in zoom-in">+1</span>}
+                  {likeFlash === "down" && <span className="absolute -right-3 -top-2 z-10 text-[9px] font-bold text-muted-foreground animate-in fade-in zoom-in">-1</span>}
+                </span>
+                <span className={cn("relative inline-flex items-center gap-0.5", commentFlash && "font-semibold text-primary")}>
+                  <ChatCircle className={cn("size-2.5 transition-all duration-300", commentFlash && "animate-bounce-y text-primary")} weight={commentFlash ? "fill" : "regular"} />
+                  {deal.commentCount}
                 </span>
               </span>
               <span className="truncate">{deal.nickname}{deal.store && <> · {deal.store}</>} · <span suppressHydrationWarning>{timeAgo(deal.createdAt)}</span></span>
@@ -263,17 +269,18 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
               dealPrice={deal.dealPrice}
               discountRate={deal.discountRate}
             />
-            <div className="group/meta relative flex items-center justify-between overflow-hidden">
+            <div className="group/meta relative flex items-center justify-between overflow-x-clip">
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <span className="relative inline-flex items-center gap-0.5">
                   <CursorClick className={cn("size-2.5 transition-transform duration-300", clickFlash && "scale-150 text-blue-500")} />
                   {formatCount(deal.clickCount ?? 0)}
-                  {clickFlash && <span className="absolute -right-3 -top-2 text-[9px] font-bold text-blue-500 animate-in fade-in zoom-in">+1</span>}
+                  {clickFlash && <span className="absolute -right-3 -top-2 z-10 text-[9px] font-bold text-blue-500 animate-in fade-in zoom-in">+1</span>}
                 </span>
                 <span className="relative inline-flex items-center gap-0.5">
                   <Heart className={cn("size-2.5 transition-all duration-300", likeFlash && "scale-150 text-red-500")} weight={likeFlash ? "fill" : "regular"} />
                   {likeCount}
-                  {likeFlash && <span className="absolute -right-3 -top-2 text-[9px] font-bold text-red-500 animate-in fade-in zoom-in">+1</span>}
+                  {likeFlash === "up" && <span className="absolute -right-3 -top-2 z-10 text-[9px] font-bold text-red-500 animate-in fade-in zoom-in">+1</span>}
+                  {likeFlash === "down" && <span className="absolute -right-3 -top-2 z-10 text-[9px] font-bold text-muted-foreground animate-in fade-in zoom-in">-1</span>}
                 </span>
               </span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -317,7 +324,7 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
               <Heart className="size-3.5 text-muted-foreground" weight={liked ? "fill" : "regular"} />좋아요
             </button>
             <button onClick={() => { setMobileMenuOpen(false); toggleComments(); }} className="flex w-full items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-muted">
-              <ChatCircle className="size-3.5 text-muted-foreground" />댓글 {deal.commentCount}
+              <ChatCircle className="size-3.5 text-muted-foreground" />댓글 보러가기
             </button>
             <div className="border-t border-border" />
             <button onClick={() => { setMobileMenuOpen(false); toggleExpired(); }} className={cn("flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted", expired ? "text-orange-500" : "text-foreground")}>
@@ -338,7 +345,7 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
           commentsOpen ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground",
         )}
       >
-        <ChatCircle className={cn("size-4 transition-all duration-300", commentFlash && !commentsOpen && "scale-125 text-primary")} weight={commentsOpen || commentFlash ? "fill" : "regular"} />
+        <ChatCircle className={cn("size-4 transition-all duration-300", commentFlash && !commentsOpen && "animate-bounce-y text-primary")} weight={commentsOpen || commentFlash ? "fill" : "regular"} />
         <span className={cn("text-xs font-medium transition-colors", commentFlash && !commentsOpen && "font-bold text-primary")}>{deal.commentCount}</span>
       </button>
 
