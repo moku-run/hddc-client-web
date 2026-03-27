@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { FireLogo } from "@/components/icons/fire-logo";
 
 interface SiteHeaderProps {
   nav?: React.ReactNode;
@@ -18,8 +17,7 @@ export function SiteHeader({ nav, children, userMenu, maxWidth = "max-w-5xl" }: 
     <header className="sticky top-0 z-50 bg-background/50 shadow-md backdrop-blur-xl">
       <nav className={cn("mx-auto flex h-14 items-center justify-between px-4 sm:px-6", maxWidth)}>
         <div className="flex items-center gap-6">
-          <Link href={logoHref} className="flex items-center gap-1.5 text-lg font-bold tracking-tight">
-            <FireLogo className="size-6 text-red-500" />
+          <Link href={logoHref} className="text-lg font-bold tracking-tight">
             핫딜닷쿨
           </Link>
           {nav}
