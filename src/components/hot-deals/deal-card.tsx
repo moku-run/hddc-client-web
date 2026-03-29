@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { HotDeal } from "@/lib/hot-deal-types";
 import { likeDeal, unlikeDeal, voteExpired, unvoteExpired } from "@/lib/hot-deal-api";
+import { ApiError } from "@/lib/api";
 import { CommentPanel } from "./comment-panel";
 import { AuthModal } from "@/components/auth/auth-modal";
 
@@ -149,10 +150,14 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
     try {
       if (liked) await unlikeDeal(deal.id);
       else await likeDeal(deal.id);
-    } catch {
+    } catch (e) {
       setLiked((prev) => !prev);
       setLikeCount((prev) => prev + (liked ? 1 : -1));
-      toast.error("좋아요 처리에 실패했습니다");
+      if (e instanceof ApiError && e.status === 401) {
+        setAuthModalOpen(true);
+      } else {
+        toast.error("좋아요 처리에 실패했습니다");
+      }
     }
   }
 
@@ -164,10 +169,14 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
       if (expired) await unvoteExpired(deal.id);
       else await voteExpired(deal.id);
       if (!expired) toast.info("종료 투표가 반영되었습니다");
-    } catch {
+    } catch (e) {
       setExpired((prev) => !prev);
       setExpiredCount((prev) => prev + (expired ? 1 : -1));
-      toast.error("투표 처리에 실패했습니다");
+      if (e instanceof ApiError && e.status === 401) {
+        setAuthModalOpen(true);
+      } else {
+        toast.error("투표 처리에 실패했습니다");
+      }
     }
   }
 

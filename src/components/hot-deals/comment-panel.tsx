@@ -7,6 +7,7 @@ import { getAvatarColor } from "@/lib/avatar-color";
 import { cn } from "@/lib/utils";
 import type { HotDeal, DealComment } from "@/lib/hot-deal-types";
 import { fetchComments, addComment, deleteComment, likeComment, unlikeComment } from "@/lib/hot-deal-api";
+import { ApiError } from "@/lib/api";
 import { SSE_EVENTS, type SseNewComment, type SseCommentDeleted } from "@/lib/sse-client";
 import { ReportPopover } from "./report-popover";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -222,8 +223,9 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
         const el = document.getElementById(`comment-${created.id}`);
         if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
       });
-    } catch {
-      toast.error("댓글 작성에 실패했습니다");
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) { setAuthModalOpen(true); }
+      else { toast.error("댓글 작성에 실패했습니다"); }
     }
   }
 
@@ -236,10 +238,11 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
     try {
       if (comment.isLiked) await unlikeComment(deal.id, commentId);
       else await likeComment(deal.id, commentId);
-    } catch {
+    } catch (e) {
       // Rollback
       setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, isLiked: comment.isLiked, likeCount: comment.likeCount } : c));
-      toast.error("좋아요 처리에 실패했습니다");
+      if (e instanceof ApiError && e.status === 401) { setAuthModalOpen(true); }
+      else { toast.error("좋아요 처리에 실패했습니다"); }
     }
   }
 
@@ -247,8 +250,9 @@ export function CommentPanel({ deal, open, onClose }: CommentPanelProps) {
     try {
       await deleteComment(deal.id, commentId);
       setComments((prev) => prev.map((c) => c.id === commentId ? { ...c, content: "", nickname: "", userId: -1 } : c));
-    } catch {
-      toast.error("댓글 삭제에 실패했습니다");
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) { setAuthModalOpen(true); }
+      else { toast.error("댓글 삭제에 실패했습니다"); }
     }
   }
 
