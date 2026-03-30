@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Heart, ChatCircle, XCircle, CursorClick, DotsThreeVertical, Flag } from "@phosphor-icons/react";
+import { Heart, ChatCircle, XCircle, CursorClick, DotsThreeVertical, Flag, Check } from "@phosphor-icons/react";
 import { HotLabel } from "@/components/icons/fire-logo";
 import { IconText } from "@/components/ui/icon-text";
 import { ActionPill } from "@/components/ui/action-pill";
@@ -64,6 +64,24 @@ function PriceDisplay({ originalPrice, dealPrice, discountRate }: {
   return <span className="text-sm font-medium text-muted-foreground">가격 정보 없음</span>;
 }
 
+/* ─── Clicked deals (localStorage) ─── */
+
+const CLICKED_KEY = "hddc-clicked-deals";
+
+function getClickedDeals(): Set<number> {
+  try {
+    const raw = localStorage.getItem(CLICKED_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch { return new Set(); }
+}
+
+function markDealClicked(dealId: number) {
+  const set = getClickedDeals();
+  if (set.has(dealId)) return;
+  set.add(dealId);
+  localStorage.setItem(CLICKED_KEY, JSON.stringify([...set]));
+}
+
 /* ─── Main component ─── */
 
 interface DealCardProps {
@@ -76,7 +94,16 @@ interface DealCardProps {
 export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggleComments }: DealCardProps) {
   const [liked, setLiked] = useState(deal.isLiked);
   const [likeCount, setLikeCount] = useState(deal.likeCount);
+  const [clicked, setClicked] = useState(false);
   const [commentsOpenLocal, setCommentsOpenLocal] = useState(false);
+
+  // 클릭 여부 체크 (localStorage)
+  useEffect(() => { setClicked(getClickedDeals().has(deal.id)); }, [deal.id]);
+
+  function handleCardClick() {
+    markDealClicked(deal.id);
+    setClicked(true);
+  }
 
   // 외부 제어가 있으면 외부 상태 사용, 없으면 로컬
   const commentsOpen = onToggleComments ? (commentsOpenProp ?? false) : commentsOpenLocal;
@@ -200,6 +227,8 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
           if (window.innerWidth < 640) {
             e.preventDefault();
             setConfirmOpen(true);
+          } else {
+            handleCardClick();
           }
         }}
         className="group flex overflow-hidden"
@@ -227,12 +256,21 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
               종료
             </span>
           )}
+          {/* C2: 클릭한 딜 — 썸네일 체크 오버레이 */}
+          {clicked && !deal.isExpired && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+              <Check className="size-6 text-white sm:size-8" weight="bold" />
+            </div>
+          )}
         </div>
 
         {/* Content */}
         <div className="flex min-w-0 flex-1 flex-col justify-center px-2 py-1.5 pr-6 sm:justify-between sm:px-3 sm:py-2.5 sm:pr-3">
-          {/* Mobile: 1줄 제목 / Desktop: 1줄 truncate */}
-          <h3 className="truncate text-sm font-semibold leading-snug group-hover:text-primary sm:text-base">
+          {/* Mobile: 1줄 제목 / Desktop: 1줄 truncate — 클릭한 딜은 제목 흐리게 */}
+          <h3 className={cn(
+            "truncate text-sm font-semibold leading-snug group-hover:text-primary sm:text-base",
+            clicked && !deal.isExpired && "text-muted-foreground",
+          )}>
             {deal.title}
           </h3>
 
@@ -366,7 +404,7 @@ export function DealCard({ deal, index, commentsOpen: commentsOpenProp, onToggle
             <div className="mt-4 flex gap-2">
               <button onClick={() => setConfirmOpen(false)} className="flex-1 rounded-lg bg-muted py-2.5 text-sm font-medium text-muted-foreground">취소</button>
               <button
-                onClick={() => { setConfirmOpen(false); window.open(`/r/deals/${deal.id}`, "_blank", "noopener,noreferrer"); }}
+                onClick={() => { setConfirmOpen(false); handleCardClick(); window.open(`/r/deals/${deal.id}`, "_blank", "noopener,noreferrer"); }}
                 className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground"
               >이동하기</button>
             </div>
