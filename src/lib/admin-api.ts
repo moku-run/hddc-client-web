@@ -95,23 +95,23 @@ export async function fetchCrawlDeals(
   size = 20,
 ): Promise<CrawlDealPage> {
   const params = new URLSearchParams({ status, page: String(page), size: String(size) });
-  const res = await adminRequest<CrawlDealPage>(`/api/admin/crawl-deals?${params}`);
+  const res = await adminRequest<CrawlDealPage>(`/api/admin/candidate-deals?${params}`);
   return res.payload!;
 }
 
 export async function approveDeal(id: number): Promise<number> {
-  const res = await adminRequest<{ hotDealId: number }>(`/api/admin/crawl-deals/${id}/approve`, {
+  const res = await adminRequest<{ hotDealId: number }>(`/api/admin/candidate-deals/${id}/approve`, {
     method: "POST",
   });
   return res.payload!.hotDealId;
 }
 
 export async function rejectDeal(id: number): Promise<void> {
-  await adminRequest(`/api/admin/crawl-deals/${id}/reject`, { method: "POST" });
+  await adminRequest(`/api/admin/candidate-deals/${id}/reject`, { method: "POST" });
 }
 
 export async function bulkApprove(ids: number[]): Promise<number> {
-  const res = await adminRequest<{ approvedCount: number }>("/api/admin/crawl-deals/bulk-approve", {
+  const res = await adminRequest<{ approvedCount: number }>("/api/admin/candidate-deals/bulk-approve", {
     method: "POST",
     body: JSON.stringify({ ids }),
   });
